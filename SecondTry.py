@@ -632,18 +632,18 @@ df.to_csv(r'/Users/fjwu/Desktop/git\repo/SecondTry5.csv', index = None, header=T
 # plt.show()
 
 
-#
-# n = 7
-# #simulate_amplitude(array5, length5, 100, length5/2)
-# simulate_amplitude2(array5, length5, 100, n)
-# plt.title('side length = 12, interval = %s' %n)
-# plt.ylabel('f = A1*(-5)+A2*5/(A1+A2)')
-# plt.xlabel('laser position in mm')
-# #plt.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.9, wspace=0.5, hspace=0.2)
-# plt.show()
-# simulate_amplitude(array5, length5, 100, n)
-# plt.title('side length = 12, interval = %s' %n)
-# plt.ylabel('number of charges in each pad')
-# plt.xlabel('laser position in mm')
-# #plt.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.9, wspace=0.5, hspace=0.2)
-# plt.show()
+
+n = 7
+#simulate_amplitude(array5, length5, 100, length5/2)
+simulate_amplitude2(array5, length5, 100, n)
+plt.title('side length = 12, interval = %s' %n)
+plt.ylabel('f = A1*(-5)+A2*5/(A1+A2)')
+plt.xlabel('laser position in mm')
+#plt.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.9, wspace=0.5, hspace=0.2)
+plt.show()
+simulate_amplitude(array5, length5, 100, n)
+plt.title('side length = 12, interval = %s' %n)
+plt.ylabel('number of charges in each pad')
+plt.xlabel('laser position in mm')
+#plt.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.9, wspace=0.5, hspace=0.2)
+plt.show()
