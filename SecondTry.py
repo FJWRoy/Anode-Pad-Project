@@ -169,7 +169,6 @@ def get_pad_nine(b, s):
     return array
 
 
-
 def simulate_amplitude(l, s, n, r):
     """
 
