@@ -586,20 +586,20 @@ x5g, y5g = poly5g.exterior.xy
 x5h, y5h = poly5h.exterior.xy
 x5i, y5i = poly5i.exterior.xy
 
-x, y, z = simulate_amplitude3(array5b, length5, 500, n, 100)
-formatted_x = [round(elem) for elem in x ]
-formatted_y = [round(elem) for elem in y ]
-row_data = {'x': formatted_x, 'y': formatted_y, 'Amp': z, 'row_x': x, 'row_y': y}
-df = pd.DataFrame(row_data, columns = ['x','y','Amp','row_x','row_y'])
-index_drop = df[df['Amp'].isnull()].index
-df.drop(index_drop, inplace=True)
-df.to_csv(r'/Users/fjwu/Desktop/git\repo/SecondTry5.csv', index = None, header=True)
+# x, y, z = simulate_amplitude3(array5b, length5, 500, n, 100)
+# formatted_x = [round(elem) for elem in x ]
+# formatted_y = [round(elem) for elem in y ]
+# row_data = {'x': formatted_x, 'y': formatted_y, 'Amp': z, 'row_x': x, 'row_y': y}
+# df = pd.DataFrame(row_data, columns = ['x','y','Amp','row_x','row_y'])
+# index_drop = df[df['Amp'].isnull()].index
+# df.drop(index_drop, inplace=True)
+# df.to_csv(r'/Users/fjwu/Desktop/git\repo/SecondTry5.csv', index = None, header=True)
 
 # fig = plt.figure(figsize=(6,4))
 # ax = fig.add_subplot(212)
 #
 # data = pd.read_csv("SecondTry5.csv")
-
+#
 # data_pivoted = data.pivot_table(index='y', columns='x', values='Amp')
 # sns.heatmap(data_pivoted, cmap='Greens')
 # ax.invert_yaxis()
@@ -610,28 +610,37 @@ df.to_csv(r'/Users/fjwu/Desktop/git\repo/SecondTry5.csv', index = None, header=T
 # X = data['row_x'].to_numpy()
 # Y = data['row_y'].to_numpy()
 # Z = data['Amp'].to_numpy()
+#
 # col = np.arange(len(Z))
-# # ax = plt.axes(projection='3d')
-# # ax.plot_trisurf(X, Y, Z, cmap='binary')
+# ax = plt.axes(projection='3d')
+# X, Y = xx, yy = np.meshgrid(X, Y)
+# ax.plot_surface(X, Y, Z, cmap='binary')
 # # ax.scatter(X, Y, Z, c=col, depthshade=True)
 # # ax.set_xlabel('x')
 # # ax.set_ylabel('y')
 # # ax.set_zlabel('z');
-# ax.scatter(Y,Z,c='b', alpha=0.5)
+# # ax.scatter(Y,Z,c='b', alpha=0.5)
 #
-# # Add second axes object
-# ax = fig.add_subplot(211)
-# plt.plot(x5a, y5a, 'g', x5b, y5b, 'g', x5c, y5c, 'g',
-#  x5d, y5d, 'g',x5e, y5e, 'g', x5f, y5f, 'g',
-#  x5g, y5g, 'g',x5h, y5h, 'g', x5i, y5i, 'g')
-# plt.plot(data['row_x'], data['row_y'], 'ro')
-# plt.title('pad shape with coord in mm')
-#
-# # Make sure the elements of the plot are arranged properly
-# plt.tight_layout()
+# # # Add second axes object
+# # ax = fig.add_subplot(211)
+# # plt.plot(x5a, y5a, 'g', x5b, y5b, 'g', x5c, y5c, 'g',
+# #  x5d, y5d, 'g',x5e, y5e, 'g', x5f, y5f, 'g',
+# #  x5g, y5g, 'g',x5h, y5h, 'g', x5i, y5i, 'g')
+# # plt.plot(data['row_x'], data['row_y'], 'ro')
+# # plt.title('pad shape with coord in mm')
+# #
+# # # Make sure the elements of the plot are arranged properly
+# # plt.tight_layout()
 # plt.show()
-
-
+X = np.arange(-5, 5, 0.25)
+Y = np.arange(-5, 5, 0.25)
+X, Y = np.meshgrid(X, Y)
+R = np.sqrt(X**2 + Y**2)
+Z = np.sin(R)
+print(X)
+print(Y)
+print(R)
+print(Z)
 
 # n = 7
 # #simulate_amplitude(array5, length5, 100, length5/2)
