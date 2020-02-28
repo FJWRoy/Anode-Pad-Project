@@ -146,6 +146,10 @@ class sim_anode:
             print(temp)
         self.amp = np.append(self.amp, temp/n)
 
+    def sim_n_coord(self):
+        amp_k = np.array([])
+            for i in range(j):
+                amp_k = sim_n_times(self, )
 
 # test cases
 side = 4
