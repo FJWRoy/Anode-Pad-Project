@@ -3,12 +3,13 @@ import random
 import pandas as pd
 import math
 from matplotlib import pyplot as plt
+from matplotlib import cm
 from shapely.geometry import LineString, MultiPolygon, MultiPoint, box, Polygon,Point
 from shapely.ops import split,  unary_union
 from mpl_toolkits import mplot3d
 from scipy.optimize import curve_fit
 import seaborn as sns
-sns.set()
+
 
 class myPadArray:
     def __init__(self, side):
@@ -71,9 +72,9 @@ class sim_anode:
         self.radius = r
         self.coord_x = None
         self.coord_y = None
-        self.num_points = n
+        self.num_points = n  # how many points around one laser pos
         self.noise = noi
-        self.amp = np.array([])
+        self.amp = None
 
     def get_coord_grid(self, num):
         x = np.linspace(-2 * self.side, self.side, num=num)
@@ -142,21 +143,41 @@ class sim_anode:
         for i in range(n):
             temp += sim_one_laserpos(self, k, j)
             coord = list([np.asarray(self.coord_x)[k][j], np.asarray(self.coord_y)[k][j]])
-            print(coord)
-            print(temp)
-        self.amp = np.append(self.amp, temp/n)
+        return temp/n
 
-    def sim_n_coord(self):
-        amp_k = np.array([])
-            for i in range(j):
-                amp_k = sim_n_times(self, )
+    def sim_n_coord(self, n):
+        length = len(self.coord_x)
+        self.amp = np.empty([length, length])
+        for g in range(length):
+            print("iteration: %s Total: %s" %(g+1, length))
+            amp_k = np.array([])
+            for i in range(length):
+                print("subiteration: %s/%s" %(i+1, length))
+                amp_k = np.append(amp_k, [self.sim_n_times(g, i, n)])
+            self.amp[g] = amp_k
 
+    def load_csv(self, string):
+        self.coord_x = pd.read_csv(string, index_col = "x")
+        self.coord_y = pd.read_csv(string, index_col = "y")
+        self.coord_amp = pd.read_csv(string, index_col = "amp")
+
+    def output_csv(self, string):
+        array_x = np.arange(len(self.coord_x)).tolist()
+        array_y = np.arange(len(self.coord_y)).tolist()
+        arrays = [array_x, array_y]
+        print(arrays)
+        indexs = pd.MultiIndex.from_product(arrays, names=('x_index', 'y_index'))
+        print(indexs)
+        df = pd.DataFrame({'x': newSim.coord_x, 'y': newSim.coord_y, 'amp': newSim.amp}, index=indexs, columns=['x_row', 'y_row', 'amp_row'])
+        df.to_csv(string)
+        print(df)
 # test cases
-side = 4
+side = 5
 radius_uni = 1 # radius of random point around laser pos
-n = 1000 # number of points around one laser pos
+n = 100 # number of points around one laser pos
 noi = 0.7 # noise level between 1 and 0
-num = 20 # num of laser positions
+num = 5 # num of laser positions
+average_num = 6 #how many simulations at one laser pos
 
 newPad = myPadArray(side)
 newPad.get_one_square_box()
@@ -164,6 +185,17 @@ newPad.get_pad_nine()
 array5b = newPad.box_array
 newSim = sim_anode(newPad, radius_uni, n, noi)
 newSim.get_coord_grid(num)
+newSim.sim_n_coord(average_num)
+
+#export data
+newSim.output_csv(r'/Users/roywu/Desktop/AnodeSimtest.csv')
+
+#draw figures
+fig = plt.figure(figsize = (16, 9))
+
+#draw pad
+ax = fig.add_subplot(221)
+array5b = newSim.box_array
 poly5a = array5b[0]
 poly5b = array5b[1]
 poly5c = array5b[2]
@@ -182,5 +214,23 @@ x5f, y5f = poly5f.exterior.xy
 x5g, y5g = poly5g.exterior.xy
 x5h, y5h = poly5h.exterior.xy
 x5i, y5i = poly5i.exterior.xy
-newSim.sim_n_times(0, 0, 10)
-print(newSim.amp)
+plt.plot(x5a, y5a, 'g', x5b, y5b, 'g', x5c, y5c, 'g', x5d, y5d, 'g',x5e, y5e, 'g', x5f, y5f, 'g', x5g, y5g, 'g',x5h, y5h, 'g', x5i, y5i, 'g')
+plt.plot(newSim.coord_x, newSim.coord_y, 'ro', markersize=6)
+plt.title('pad shape with coord in mm')
+#draw surface graph
+ax2 = fig.add_subplot(222, projection='3d',sharex=ax,sharey=ax)
+ax2.set_title('Surface plot')
+s = ax2.plot_surface(newSim.coord_x, newSim.coord_y, newSim.amp, cmap=cm.coolwarm,
+                               linewidth=0, antialiased=False)
+plt.colorbar(s, shrink=0.5, aspect=5)
+
+#draw heatmap
+ax3 = fig.add_subplot(223)
+df = pd.DataFrame({'x': newSim.coord_x.flatten(), 'amp': newSim.amp.flatten(), 'y': newSim.coord_y.flatten()})
+data_pivoted = df.pivot_table(index='y', columns='x', values='amp')
+ax3 = sns.heatmap(data_pivoted, cmap='Greens')
+plt.title("Resolution in mm")
+plt.xlabel("coord_x in mm")
+plt.ylabel("coord_y in mm")
+
+plt.show()
