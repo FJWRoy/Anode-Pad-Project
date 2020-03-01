@@ -5,7 +5,7 @@ import math
 from matplotlib import pyplot as plt
 from matplotlib import cm
 from shapely.geometry import LineString, MultiPolygon, MultiPoint, box, Polygon,Point
-from shapely.ops import split,  unary_union
+from shapely.ops import split, unary_union
 from mpl_toolkits import mplot3d
 from scipy.optimize import curve_fit
 import seaborn as sns
@@ -16,15 +16,54 @@ class myPadArray:
         self.side = side
         self.box = None
         self.box_array = None
+        self.center_x = None
+        self.center_y = None
+
     # return a box on Second Quadrant. dont change
     def get_one_square_box(self):
-        """Create a square box
+        """
+        Create a square box
 
         :param side: length of a side of the box. coord starts from negative x to 0, positive y to 0
-        :return: a box on second quadrant  #
+        :return: a box on second quadrant
         """
+
         b = box(-self.side, 0.0, 0.0, self.side)
         self.box = b
+
+    def modify_one_o_box(self, start, amp):
+        """
+        Create a o box
+
+        """
+        s = self.side
+        b = self.box
+        end = 1 - start
+        list_turning_point_x = np.array([start, start, end, end]) * s
+        list_turning_point_y = np.array([0, amp, amp, 0])
+        box_right = list(zip(-list_turning_point_y, list_turning_point_x))
+        box_left = list(zip(-list_turning_point_y - s, list_turning_point_x))
+        box_down = list(zip(-list_turning_point_x, list_turning_point_y))
+        box_up = list(zip(-list_turning_point_x, list_turning_point_y + s))
+        # right down is for subtraction from the box, up left for union
+        line_right = LineString(box_right)
+        line_down = LineString(box_down)
+        poly_left = Polygon(box_left)
+        poly_up = Polygon(box_up)
+        # cut/combine
+        box_after_r = split(b, line_right)  # r is right
+        box_after_r_d = split(box_after_r[0], line_down)  # d is down, the first item is desired polygon
+        polygons = MultiPolygon([box_after_r_d[0], poly_up])  # intermediate between box_final and poly_left, up
+        box_after_up = unary_union(polygons)
+        polygons = MultiPolygon([box_after_up, poly_left])
+        box_final = unary_union(polygons)
+        self.box = box_final
+
+    def calculate_center(self): #calculate the position of the center of the box
+        point = self.box.centroid
+        self.center_x = point.x
+        self.center_y = point.y
+
     # return a list 9 polygon (defined in shapely)
     def get_pad_nine(self):
         """
@@ -75,6 +114,7 @@ class sim_anode:
         self.num_points = None  # how many points around one laser pos
         self.noise = None
         self.amp = None
+        self.one_pad_center = None
 
     def get_parameters(self, padArray, r, n, noi):
         self.box_array = padArray.box_array
@@ -82,6 +122,7 @@ class sim_anode:
         self.noise = noi
         self.radius = r
         self.num_points = n  # how many points around one laser pos
+        self.one_pad_center = [padArray.center_x, padArray.center_y]
 
     def get_coord_grid(self, num):
         x = np.linspace(-2 * self.side, self.side, num=num)
@@ -108,6 +149,8 @@ class sim_anode:
             n = self.num_points
             noi = self.noise
             s = self.side
+            center = self.one_pad_center
+
             random_noi = np.random.uniform(-noi+1, 1+noi, 1)
             n = math.ceil(random_noi*n)
 
@@ -140,8 +183,8 @@ class sim_anode:
                 r_cons_x = 100
                 r_cons_y = 100
             else:
-                r_cons_x = (left_a_x * (-1.5*s/2) + center_a_x* (-s/2) + right_a_x * (s/2))/total
-                r_cons_y = (up_a_y * (1.5*s) + center_a_y * (s/2) + low_a_y * (-s/2))/total
+                r_cons_x = (left_a_x * (center[0] - s) + center_a_x* center[0] + right_a_x * (center[0] + s))/total
+                r_cons_y = (up_a_y * (s + center[1]) + center_a_y * center[1] + low_a_y * (center[1] - s))/total
 
             delta = ((r_cons_x - coord[0])**2 + (r_cons_y - coord[1])**2 )**0.5
             return delta
@@ -185,25 +228,30 @@ class sim_anode:
 # test cases
 side = 6
 radius_uni = 1 # radius of random point around laser pos
-n = 500 # number of points around one laser pos
+n = 100 # number of points around one laser pos
 noi = 0.2 # noise level between 1 and 0
-num = 30 # num of laser positions
-average_num = 10 #how many simulations at one laser pos
+num = 5 # num of laser positions
+average_num = 5 #how many simulations at one laser pos
+
 
 newPad = myPadArray(side)
 newPad.get_one_square_box()
+#newPad.modify_one_o_box(0.25, newPad.side/5) #start at 0.25 end at 0.75, height is 1/4 of the side
+newPad.calculate_center()
 newPad.get_pad_nine()
+
 newSim = sim_anode()
 newSim.get_parameters(newPad, radius_uni, n, noi)
 newSim.get_coord_grid(num)
-
 #run simulation
 newSim.sim_n_coord(average_num)
+
+
 #export data
 #newSim.output_csv(r'/Users/roywu/Desktop/git_repo/Anode-Pad-Project/AnodeSimtest_.csv')
-newSim.output_csv(r'/home/fjwu/cs/henry_sim/Anode-Pad-Project/AnodeSimtest.csv')
+#newSim.output_csv(r'/home/fjwu/cs/henry_sim/Anode-Pad-Project/AnodeSimtest.csv')
 # #read data
-# newSim.load_csv('AnodeSimtest.csv')
+#newSim.load_csv('AnodeSimtest.csv')
 
 #draw figures
 fig = plt.figure(figsize = (16, 9))

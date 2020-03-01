@@ -494,17 +494,17 @@ def simulate_amplitude4(l, s, n, r, laser):
 # x1, y1 = b_after1.exterior.xy
 # plt.plot(x1, y1)
 # """
-# """
-# # test get_pad_array
-# box2, length2 = get_one_square_box(12)
-# b_after2 = modify_random_shape_of_box(box2, length2)
-# array2 = get_pad_array(b_after2, length2)
-# poly2a = array2[0]
-# poly2b = array2[1]
-# x2a, y2a = poly2a.exterior.xy
-# x2b, y2b = poly2b.exterior.xy
-# plt.plot(x2a, y2a, 'r', x2b, y2b, 'g')
-# """
+
+# test get_pad_array
+box2, length2 = get_one_square_box(12)
+b_after2 = modify_random_shape_of_box(box2, length2)
+array2 = get_pad_array(b_after2, length2)
+poly2a = array2[0]
+poly2b = array2[1]
+x2a, y2a = poly2a.exterior.xy
+x2b, y2b = poly2b.exterior.xy
+plt.plot(x2a, y2a, 'r', x2b, y2b, 'g')
+
 # """
 # # test simulate_amplitude with random shape
 # box3, length3 = get_one_square_box(12)
@@ -533,7 +533,8 @@ def simulate_amplitude4(l, s, n, r, laser):
 # """
 
 # test simulate_amplitude with regular box
-box5, length5 = get_one_square_box(4)
+box5, length5 = get_one_square_box(8)
+box5 = modify_specific_shape_of_box(box5, length5, 'box', 2)
 array5 = get_pad_array(box5, length5)
 array5b = get_pad_nine(box5, length5)
 
@@ -594,7 +595,7 @@ x5i, y5i = poly5i.exterior.xy
 # df.drop(index_drop, inplace=True)
 # df.to_csv(r'/Users/fjwu/Desktop/git\repo/SecondTry5.csv', index = None, header=True)
 
-# fig = plt.figure(figsize=(6,4))
+fig = plt.figure(figsize=(6,4))
 # ax = fig.add_subplot(212)
 #
 # data = pd.read_csv("SecondTry5.csv")
@@ -620,26 +621,17 @@ x5i, y5i = poly5i.exterior.xy
 # # ax.set_zlabel('z');
 # # ax.scatter(Y,Z,c='b', alpha=0.5)
 #
-# # # Add second axes object
-# # ax = fig.add_subplot(211)
-# # plt.plot(x5a, y5a, 'g', x5b, y5b, 'g', x5c, y5c, 'g',
-# #  x5d, y5d, 'g',x5e, y5e, 'g', x5f, y5f, 'g',
-# #  x5g, y5g, 'g',x5h, y5h, 'g', x5i, y5i, 'g')
-# # plt.plot(data['row_x'], data['row_y'], 'ro')
-# # plt.title('pad shape with coord in mm')
-# #
+# Add second axes object
+# ax = fig.add_subplot(211)
+# plt.plot(x5a, y5a, 'g', x5b, y5b, 'g', x5c, y5c, 'g',
+#  x5d, y5d, 'g',x5e, y5e, 'g', x5f, y5f, 'g',
+#  x5g, y5g, 'g',x5h, y5h, 'g', x5i, y5i, 'g')
+# plt.title('pad shape with coord in mm')
+
 # # # Make sure the elements of the plot are arranged properly
 # # plt.tight_layout()
 # plt.show()
-X = np.arange(-5, 5, 0.25)
-Y = np.arange(-5, 5, 0.25)
-X, Y = np.meshgrid(X, Y)
-R = np.sqrt(X**2 + Y**2)
-Z = np.sin(R)
-print(X)
-print(Y)
-print(R)
-print(Z)
+
 
 # n = 7
 # #simulate_amplitude(array5, length5, 100, length5/2)
@@ -654,4 +646,4 @@ print(Z)
 # plt.ylabel('number of charges in each pad')
 # plt.xlabel('laser position in mm')
 # #plt.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.9, wspace=0.5, hspace=0.2)
-# plt.show()
+plt.show()
