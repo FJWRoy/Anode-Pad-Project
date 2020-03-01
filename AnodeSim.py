@@ -66,15 +66,22 @@ class myPadArray:
 # given a coord, return an average pos resolution delta r
 
 class sim_anode:
-    def __init__(self, padArray, r, n, noi):
-        self.box_array = padArray.box_array
-        self.side = padArray.side
-        self.radius = r
+    def __init__(self):
+        self.box_array = None
+        self.side = None
+        self.radius = None
         self.coord_x = None
         self.coord_y = None
-        self.num_points = n  # how many points around one laser pos
-        self.noise = noi
+        self.num_points = None  # how many points around one laser pos
+        self.noise = None
         self.amp = None
+
+    def get_parameters(self, padArray, r, n, noi):
+        self.box_array = padArray.box_array
+        self.side = padArray.side
+        self.noise = noi
+        self.radius = r
+        self.num_points = n  # how many points around one laser pos
 
     def get_coord_grid(self, num):
         x = np.linspace(-2 * self.side, self.side, num=num)
@@ -157,42 +164,49 @@ class sim_anode:
             self.amp[g] = amp_k
 
     def load_csv(self, string):
-        self.coord_x = pd.read_csv(string, index_col = "x")
-        self.coord_y = pd.read_csv(string, index_col = "y")
-        self.coord_amp = pd.read_csv(string, index_col = "amp")
+        self.coord_amp = np.empty([self.side, self.side])
+        df = pd.read_csv(string, index_col = [0,1])
+        df_amp = df.loc[['amp']]
+        df_list = df_amp.values.tolist()
+        self.amp = np.array(df_list)
 
     def output_csv(self, string):
-        array_x = np.arange(len(self.coord_x)).tolist()
-        array_y = np.arange(len(self.coord_y)).tolist()
-        arrays = [array_x, array_y]
-        print(arrays)
-        indexs = pd.MultiIndex.from_product(arrays, names=('x_index', 'y_index'))
-        print(indexs)
-        df = pd.DataFrame({'x': newSim.coord_x, 'y': newSim.coord_y, 'amp': newSim.amp}, index=indexs, columns=['x_row', 'y_row', 'amp_row'])
+        array_x = self.coord_x
+        array_y = self.coord_y
+        array_amp = self.amp
+        arrays = np.append(np.append(array_x, array_y, axis=0), array_amp, axis=0)
+        col = np.arange(len(self.coord_x))
+        index_array = [['x_coord', 'y_coord', 'amp'], np.arange(len(self.coord_y)).tolist()]
+        ind = pd.MultiIndex.from_product(index_array, names=['coord', 'index'])
+        df = pd.DataFrame(arrays.tolist(), index=ind, columns = col)
         df.to_csv(string)
-        print(df)
+
+
 # test cases
-side = 5
+side = 6
 radius_uni = 1 # radius of random point around laser pos
-n = 100 # number of points around one laser pos
-noi = 0.7 # noise level between 1 and 0
-num = 5 # num of laser positions
-average_num = 6 #how many simulations at one laser pos
+n = 500 # number of points around one laser pos
+noi = 0.2 # noise level between 1 and 0
+num = 30 # num of laser positions
+average_num = 10 #how many simulations at one laser pos
 
 newPad = myPadArray(side)
 newPad.get_one_square_box()
 newPad.get_pad_nine()
-array5b = newPad.box_array
-newSim = sim_anode(newPad, radius_uni, n, noi)
+newSim = sim_anode()
+newSim.get_parameters(newPad, radius_uni, n, noi)
 newSim.get_coord_grid(num)
-newSim.sim_n_coord(average_num)
 
+#run simulation
+newSim.sim_n_coord(average_num)
 #export data
-newSim.output_csv(r'/Users/roywu/Desktop/AnodeSimtest.csv')
+newSim.output_csv(r'/Users/roywu/Desktop/git_repo/Anode-Pad-Project/AnodeSimtest_.csv')
+
+# #read data
+# newSim.load_csv('AnodeSimtest.csv')
 
 #draw figures
 fig = plt.figure(figsize = (16, 9))
-
 #draw pad
 ax = fig.add_subplot(221)
 array5b = newSim.box_array
@@ -215,7 +229,7 @@ x5g, y5g = poly5g.exterior.xy
 x5h, y5h = poly5h.exterior.xy
 x5i, y5i = poly5i.exterior.xy
 plt.plot(x5a, y5a, 'g', x5b, y5b, 'g', x5c, y5c, 'g', x5d, y5d, 'g',x5e, y5e, 'g', x5f, y5f, 'g', x5g, y5g, 'g',x5h, y5h, 'g', x5i, y5i, 'g')
-plt.plot(newSim.coord_x, newSim.coord_y, 'ro', markersize=6)
+plt.plot(newSim.coord_x, newSim.coord_y, 'ro', markersize=3)
 plt.title('pad shape with coord in mm')
 #draw surface graph
 ax2 = fig.add_subplot(222, projection='3d',sharex=ax,sharey=ax)
@@ -223,7 +237,6 @@ ax2.set_title('Surface plot')
 s = ax2.plot_surface(newSim.coord_x, newSim.coord_y, newSim.amp, cmap=cm.coolwarm,
                                linewidth=0, antialiased=False)
 plt.colorbar(s, shrink=0.5, aspect=5)
-
 #draw heatmap
 ax3 = fig.add_subplot(223)
 df = pd.DataFrame({'x': newSim.coord_x.flatten(), 'amp': newSim.amp.flatten(), 'y': newSim.coord_y.flatten()})
