@@ -200,8 +200,8 @@ newSim.get_coord_grid(num)
 #run simulation
 newSim.sim_n_coord(average_num)
 #export data
-newSim.output_csv(r'/Users/roywu/Desktop/git_repo/Anode-Pad-Project/AnodeSimtest_.csv')
-
+#newSim.output_csv(r'/Users/roywu/Desktop/git_repo/Anode-Pad-Project/AnodeSimtest_.csv')
+newSim.output_csv(r'/home/fjwu/cs/henry_sim/Anode-Pad-Project/AnodeSimtest.csv')
 # #read data
 # newSim.load_csv('AnodeSimtest.csv')
 
