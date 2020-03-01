@@ -238,7 +238,7 @@ average_num = 15 #how many simulations at one laser pos
 
 newPad = myPadArray(side)
 newPad.get_one_square_box()
-#newPad.modify_one_o_box(0.25, newPad.side/5) #start at 0.25 end at 0.75, height is 1/4 of the side
+newPad.modify_one_o_box(0.25, newPad.side/5) #start at 0.25 end at 0.75, height is 1/4 of the side
 newPad.calculate_center()
 newPad.get_pad_nine()
 
