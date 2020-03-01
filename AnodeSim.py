@@ -180,8 +180,8 @@ class sim_anode:
 
             total = up_a_y + center_a_y + low_a_y
             if total == 0:
-                r_cons_x = 100
-                r_cons_y = 100
+                r_cons_x = self.side
+                r_cons_y = self.side
             else:
                 r_cons_x = (left_a_x * (center[0] - s) + center_a_x* center[0] + right_a_x * (center[0] + s))/total
                 r_cons_y = (up_a_y * (s + center[1]) + center_a_y * center[1] + low_a_y * (center[1] - s))/total
@@ -207,11 +207,13 @@ class sim_anode:
             self.amp[g] = amp_k
 
     def load_csv(self, string):
+        s = self.side
         self.coord_amp = np.empty([self.side, self.side])
         df = pd.read_csv(string, index_col = [0,1])
         df_amp = df.loc[['amp']]
         df_list = df_amp.values.tolist()
-        self.amp = np.array(df_list)
+        arr = np.array(df_list)
+        self.amp = np.where(arr > s, s, arr)
 
     def output_csv(self, string):
         array_x = self.coord_x
@@ -228,10 +230,10 @@ class sim_anode:
 # test cases
 side = 6
 radius_uni = 1 # radius of random point around laser pos
-n = 100 # number of points around one laser pos
+n = 500 # number of points around one laser pos
 noi = 0.2 # noise level between 1 and 0
-num = 5 # num of laser positions
-average_num = 5 #how many simulations at one laser pos
+num = 30 # num of laser positions
+average_num = 15 #how many simulations at one laser pos
 
 
 newPad = myPadArray(side)
@@ -244,14 +246,15 @@ newSim = sim_anode()
 newSim.get_parameters(newPad, radius_uni, n, noi)
 newSim.get_coord_grid(num)
 #run simulation
-newSim.sim_n_coord(average_num)
+#newSim.sim_n_coord(average_num)
 
 
 #export data
-#newSim.output_csv(r'/Users/roywu/Desktop/git_repo/Anode-Pad-Project/AnodeSimtest_.csv')
+#newSim.output_csv(r'/Users/roywu/Desktop/git_repo/Anode-Pad-Project/AnodeSimtest_rbox.csv')
 #newSim.output_csv(r'/home/fjwu/cs/henry_sim/Anode-Pad-Project/AnodeSimtest.csv')
-# #read data
-#newSim.load_csv('AnodeSimtest.csv')
+#read data
+
+newSim.load_csv('AnodeSimtest_obox.csv')
 
 #draw figures
 fig = plt.figure(figsize = (16, 9))
@@ -287,7 +290,7 @@ s = ax2.plot_surface(newSim.coord_x, newSim.coord_y, newSim.amp, cmap=cm.coolwar
 plt.colorbar(s, shrink=0.5, aspect=5)
 #draw heatmap
 ax3 = fig.add_subplot(223)
-df = pd.DataFrame({'x': newSim.coord_x.flatten(), 'amp': newSim.amp.flatten(), 'y': newSim.coord_y.flatten()})
+df = pd.DataFrame({'x': np.around(newSim.coord_x.flatten().tolist(), decimals=0), 'amp': newSim.amp.flatten(), 'y': np.around(newSim.coord_y.flatten().tolist(), decimals=0)})
 data_pivoted = df.pivot_table(index='y', columns='x', values='amp')
 ax3 = sns.heatmap(data_pivoted, cmap='Greens')
 plt.title("Resolution in mm")
