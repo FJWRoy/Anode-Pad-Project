@@ -59,6 +59,36 @@ class myPadArray:
         box_final = unary_union(polygons)
         self.box = box_final
 
+    def modify_one_sin_box(self, start, step, amp):
+        b = self.box
+        s = self.side
+        end= 1-start
+        x_sin_range_temp = np.arange(s * start, end*s, step)
+
+        x_sin_range = np.append(x_sin_range_temp, np.array(end * s))
+        y_range = amp * np.append(np.sin((x_sin_range_temp - start*s) * 0.5 *  np.pi / (start * s)), np.array(0))
+        sin_right = np.vstack([np.array([0, 0]),
+                              np.vstack([np.array(list(zip(-1 * y_range, x_sin_range))),
+                                         np.array([0, s])])])
+        sin_left = np.array(list(zip(-1 * y_range - s, x_sin_range)))
+        sin_down = np.vstack([np.array([0, 0]),
+                             np.vstack([np.array(list(zip(-1 * x_sin_range, y_range))),
+                                       np.array([-s, 0])])])
+        sin_up = np.array(list(zip(-1 * x_sin_range, y_range + s)))
+        # right down is for subtraction from the box, up left for union
+        line_right = LineString(sin_right.tolist())
+        line_down = LineString(sin_down.tolist())
+        poly_left = Polygon(sin_left.tolist())
+        poly_up = Polygon(sin_up.tolist())
+        # cut/combine
+        box_after_r = split(b, line_right)  # r is right
+        box_after_r_d = split(box_after_r[0], line_down)  # d is down, the first item is desired polygon
+        polygons = MultiPolygon([box_after_r_d[0], poly_up])  # intermediate between box_final and poly_left, up
+        box_after_up = unary_union(polygons)
+        polygons = MultiPolygon([box_after_up, poly_left])
+        box_final = unary_union(polygons)
+        self.box = box_final
+
     def calculate_center(self): #calculate the position of the center of the box
         point = self.box.centroid
         self.center_x = point.x
@@ -233,12 +263,13 @@ radius_uni = 1 # radius of random point around laser pos
 n = 500 # number of points around one laser pos
 noi = 0.2 # noise level between 1 and 0
 num = 30 # num of laser positions
-average_num = 15 #how many simulations at one laser pos
+average_num = 10 #how many simulations at one laser pos
 
 
 newPad = myPadArray(side)
 newPad.get_one_square_box()
-newPad.modify_one_o_box(0.25, newPad.side/5) #start at 0.25 end at 0.75, height is 1/4 of the side
+#newPad.modify_one_o_box(0.25, newPad.side/5) #start at 0.25 end at 0.75, height is 1/4 of the side
+newPad.modify_one_sin_box(0.25, 0.01, newPad.side/5) #start at 0.25, 0.01 is step, amplitude is side/5
 newPad.calculate_center()
 newPad.get_pad_nine()
 
@@ -246,15 +277,15 @@ newSim = sim_anode()
 newSim.get_parameters(newPad, radius_uni, n, noi)
 newSim.get_coord_grid(num)
 #run simulation
-#newSim.sim_n_coord(average_num)
+newSim.sim_n_coord(average_num)
 
 
 #export data
-#newSim.output_csv(r'/Users/roywu/Desktop/git_repo/Anode-Pad-Project/AnodeSimtest_rbox.csv')
+newSim.output_csv(r'/Users/roywu/Desktop/git_repo/Anode-Pad-Project/AnodeSimtest_sbox.csv')
 #newSim.output_csv(r'/home/fjwu/cs/henry_sim/Anode-Pad-Project/AnodeSimtest.csv')
 #read data
 
-newSim.load_csv('AnodeSimtest_obox.csv')
+#newSim.load_csv('AnodeSimtest_obox.csv')
 
 #draw figures
 fig = plt.figure(figsize = (16, 9))

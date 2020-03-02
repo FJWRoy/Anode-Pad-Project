@@ -534,7 +534,7 @@ plt.plot(x2a, y2a, 'r', x2b, y2b, 'g')
 
 # test simulate_amplitude with regular box
 box5, length5 = get_one_square_box(8)
-box5 = modify_specific_shape_of_box(box5, length5, 'box', 2)
+box5 = modify_specific_shape_of_box(box5, length5, 'sin', 2)
 array5 = get_pad_array(box5, length5)
 array5b = get_pad_nine(box5, length5)
 
@@ -621,12 +621,12 @@ fig = plt.figure(figsize=(6,4))
 # # ax.set_zlabel('z');
 # # ax.scatter(Y,Z,c='b', alpha=0.5)
 #
-# Add second axes object
-# ax = fig.add_subplot(211)
-# plt.plot(x5a, y5a, 'g', x5b, y5b, 'g', x5c, y5c, 'g',
-#  x5d, y5d, 'g',x5e, y5e, 'g', x5f, y5f, 'g',
-#  x5g, y5g, 'g',x5h, y5h, 'g', x5i, y5i, 'g')
-# plt.title('pad shape with coord in mm')
+#Add second axes object
+ax = fig.add_subplot(211)
+plt.plot(x5a, y5a, 'g', x5b, y5b, 'g', x5c, y5c, 'g',
+ x5d, y5d, 'g',x5e, y5e, 'g', x5f, y5f, 'g',
+ x5g, y5g, 'g',x5h, y5h, 'g', x5i, y5i, 'g')
+plt.title('pad shape with coord in mm')
 
 # # # Make sure the elements of the plot are arranged properly
 # # plt.tight_layout()
