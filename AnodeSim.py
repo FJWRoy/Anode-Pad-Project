@@ -260,16 +260,16 @@ class sim_anode:
 # test cases
 side = 6
 radius_uni = 1 # radius of random point around laser pos
-n = 500 # number of points around one laser pos
-noi = 0.2 # noise level between 1 and 0
-num = 30 # num of laser positions
-average_num = 10 #how many simulations at one laser pos
+n = 500 # number of points around one laser pos 500
+noi = 0.2 # noise level between 1 and 0 0.2
+num = 30 # num of laser positions 30
+average_num = 10 #how many simulations at one laser pos 10
 
 
 newPad = myPadArray(side)
 newPad.get_one_square_box()
-#newPad.modify_one_o_box(0.25, newPad.side/5) #start at 0.25 end at 0.75, height is 1/4 of the side
-newPad.modify_one_sin_box(0.25, 0.01, newPad.side/5) #start at 0.25, 0.01 is step, amplitude is side/5
+newPad.modify_one_o_box(0.25, newPad.side/10) #start at 0.25 end at 0.75, height is 1/5 of the side
+#newPad.modify_one_sin_box(0.25, 0.01, newPad.side/5) #start at 0.25, 0.01 is step, amplitude is side/5
 newPad.calculate_center()
 newPad.get_pad_nine()
 
@@ -281,7 +281,7 @@ newSim.sim_n_coord(average_num)
 
 
 #export data
-newSim.output_csv(r'/Users/roywu/Desktop/git_repo/Anode-Pad-Project/AnodeSimtest_sbox.csv')
+newSim.output_csv(r'/Users/roywu/Desktop/git_repo/Anode-Pad-Project/AnodeSimtest_obox_half.csv')
 #newSim.output_csv(r'/home/fjwu/cs/henry_sim/Anode-Pad-Project/AnodeSimtest.csv')
 #read data
 
