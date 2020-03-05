@@ -225,3 +225,9 @@ class sim_anode:
 # ax4.set_ylabel('position resolution /mm')
 # ax4.grid()
 # plt.show()
+
+if __name__ == "__main__":
+    print("SimAnode")
+    print(__name__)
+else:
+    print("SimAnode run from import")

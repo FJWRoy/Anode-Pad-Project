@@ -133,3 +133,9 @@ class myPadArray:
 
         self.box_array = array
 # given a coord, return an average pos resolution delta r
+
+if __name__ == "__main__":
+    print("myPadArray")
+    print(__name__)
+else:
+    print("myPadArray run from import")
