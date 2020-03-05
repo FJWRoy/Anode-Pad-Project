@@ -188,17 +188,17 @@ class sim_anode:
             random_points_y = np.random.uniform(coord[1] - r, coord[1] + r, n)
             random_points = list(zip(random_points_x, random_points_y))
 
-            charge_sum_left = np.count_nonzero(is_contain(random_points, l[1]))/n
-            charge_sum_center = np.count_nonzero(is_contain(random_points, l[0]))/n
-            charge_sum_right = np.count_nonzero(is_contain(random_points, l[5]))/n
+            charge_sum_left = np.count_nonzero(is_contain(random_points, l[1]))/n + int(np.random.normal(n/12,n/120))
+            charge_sum_center = np.count_nonzero(is_contain(random_points, l[0]))/n+ int(np.random.normal(n/12,n/120))
+            charge_sum_right = np.count_nonzero(is_contain(random_points, l[5]))/n+ int(np.random.normal(n/12,n/120))
 
-            charge_sum_upleft = np.count_nonzero(is_contain(random_points, l[2]))/n
-            charge_sum_upcenter = np.count_nonzero(is_contain(random_points, l[3]))/n
-            charge_sum_upright = np.count_nonzero(is_contain(random_points, l[4]))/n
+            charge_sum_upleft = np.count_nonzero(is_contain(random_points, l[2]))/n+ int(np.random.normal(n/12,n/120))
+            charge_sum_upcenter = np.count_nonzero(is_contain(random_points, l[3]))/n+ int(np.random.normal(n/12,n/120))
+            charge_sum_upright = np.count_nonzero(is_contain(random_points, l[4]))/n+ int(np.random.normal(n/12,n/120))
 
-            charge_sum_lowleft = np.count_nonzero(is_contain(random_points, l[8]))/n
-            charge_sum_lowcenter = np.count_nonzero(is_contain(random_points, l[7]))/n
-            charge_sum_lowright = np.count_nonzero(is_contain(random_points, l[6]))/n
+            charge_sum_lowleft = np.count_nonzero(is_contain(random_points, l[8]))/n+ int(np.random.normal(n/12,n/120))
+            charge_sum_lowcenter = np.count_nonzero(is_contain(random_points, l[7]))/n+ int(np.random.normal(n/12,n/120))
+            charge_sum_lowright = np.count_nonzero(is_contain(random_points, l[6]))/n+ int(np.random.normal(n/12,n/120))
 
             left_a_x = charge_sum_upleft + charge_sum_left + charge_sum_lowleft
             center_a_x = charge_sum_upcenter + charge_sum_center + charge_sum_lowcenter
@@ -259,16 +259,16 @@ class sim_anode:
 
 # test cases
 side = 6
-radius_uni = 3 # radius of random point around laser pos
+radius_uni = 1 # radius of random point around laser pos
 n = 500 # number of points around one laser pos 500
 noi = 0.2 # noise level between 1 and 0 0.2
-num = 30 # num of laser positions 30
-average_num = 10 #how many simulations at one laser pos 10
+num = 60 # num of laser positions 30
+average_num = 5 #how many simulations at one laser pos 5
 
 
 newPad = myPadArray(side)
 newPad.get_one_square_box()
-newPad.modify_one_o_box(0.25, newPad.side/5) #start at 0.25 end at 0.75, height is 1/5 of the side
+#newPad.modify_one_o_box(0.25, newPad.side/5) #start at 0.25 end at 0.75, height is 1/5 of the side
 #newPad.modify_one_sin_box(0.25, 0.01, newPad.side/5) #start at 0.25, 0.01 is step, amplitude is side/5
 newPad.calculate_center()
 newPad.get_pad_nine()
@@ -279,13 +279,20 @@ newSim.get_coord_grid(num)
 #run simulation
 newSim.sim_n_coord(average_num)
 
-
 #export data
-newSim.output_csv(r'/Users/roywu/Desktop/git_repo/Anode-Pad-Project/AnodeSimtestlarge_obox.csv')
+newSim.output_csv(r'/Users/roywu/Desktop/git_repo/Anode-Pad-Project/AnodeSimtest_o_123.csv')
 #newSim.output_csv(r'/home/fjwu/cs/henry_sim/Anode-Pad-Project/AnodeSimtest.csv')
 #read data
 
-#newSim.load_csv('AnodeSimtest_obox.csv')
+
+
+#newSim.load_csv('AnodeSimtest_rbox.csv')
+#newSim.load_csv('Anode_o.csv')
+
+print(newSim.coord_x[14])
+print(newSim.coord_y[14])
+print(newSim.amp[14])
+
 
 #draw figures
 fig = plt.figure(figsize = (16, 8))
@@ -315,14 +322,14 @@ plt.plot(newSim.coord_x, newSim.coord_y, 'ro', markersize=3)
 plt.title('pad shape with coordinates in mm, red dots as laser positions')
 ax.set_ylabel('Y axis')
 #draw surface graph
-ax2 = fig.add_subplot(122, projection='3d',sharex=ax)
-ax2.set_title('Surface plot')
-s = ax2.plot_surface(newSim.coord_x, newSim.coord_y, newSim.amp, cmap=cm.coolwarm,
-                               linewidth=0, antialiased=False)
-plt.colorbar(s, shrink=0.5, aspect=5)
-ax2.set_xlabel('X axis')
-ax2.set_ylabel('Y axis')
-ax2.set_zlabel('Amplitude axis')
+# ax2 = fig.add_subplot(222, projection='3d',sharex=ax)
+# ax2.set_title('Surface plot')
+# s = ax2.plot_surface(newSim.coord_x, newSim.coord_y, newSim.amp, cmap=cm.coolwarm,
+#                                linewidth=0, antialiased=False)
+# plt.colorbar(s, shrink=0.5, aspect=5)
+# ax2.set_xlabel('X axis')
+# ax2.set_ylabel('Y axis')
+# ax2.set_zlabel('Amplitude axis')
 #draw heatmap
 ax3 = fig.add_subplot(223)
 df = pd.DataFrame({'x': np.around(newSim.coord_x.flatten().tolist(), decimals=0), 'amp': newSim.amp.flatten(), 'y': np.around(newSim.coord_y.flatten().tolist(), decimals=0)})
@@ -333,4 +340,9 @@ plt.title("distance between reconstructed laser position and actual laser positi
 plt.xlabel("laser position, x coordinate in mm")
 plt.ylabel("laser position y coordinate in mm")
 
+ax4 = fig.add_subplot(224)
+h = ax4.plot(newSim.coord_x[10], newSim.amp[10])
+ax4.set_xlabel('Laser position x/mm')
+ax4.set_ylabel('position resolution /mm')
+ax4.grid()
 plt.show()
