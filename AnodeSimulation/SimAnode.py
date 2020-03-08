@@ -9,225 +9,156 @@ from shapely.ops import split, unary_union
 from mpl_toolkits import mplot3d
 from scipy.optimize import curve_fit
 import seaborn as sns
-
+import time
 
 class sim_anode:
     def __init__(self):
         self.box_array = None
         self.side = None
         self.radius = None
+        self.start_pos = None
+        self.end_pos = None
         self.coord_x = None
         self.coord_y = None
         self.num_points = None  # how many points around one laser pos
-        self.noise = None
-        self.amp = None
+        self.noise_mean = None
+        self.noise_variance = None
+        self.res = None
         self.one_pad_center = None
+        self.level = 0
+        self.amplitude = None
+        self.c = None
 
-    def get_parameters(self, padArray, r, n, noi):
+    def get_parameters(self, padArray, r, n, noise_mean, noise_variance, start_pos, end_pos):
         self.box_array = padArray.box_array
         self.side = padArray.side
-        self.noise = noi
+        self.start_pos = start_pos
+        self.end_pos = end_pos
+        self.noise_mean = noise_mean
+        self.noise_variance = noise_variance
         self.radius = r
         self.num_points = n  # how many points around one laser pos
         self.one_pad_center = [padArray.center_x, padArray.center_y]
 
     def get_coord_grid(self, num):
-        x = np.linspace(-2 * self.side, self.side, num=num)
-        y = np.linspace(-self.side, self.side * 2, num=num)
-        self.coord_x, self.coord_y = np.meshgrid(x, y)
+        #x = np.linspace(-2 * self.side, self.side, num=num)
+        #y = np.linspace(-self.side, self.side * 2, num=num)
+        self.coord_x = np.linspace(self.start_pos[0], self.end_pos[0], num)
+        coeff_x = (self.end_pos[1] - self.start_pos[1]) / (self.end_pos[0] - self.start_pos[0])
+        coeff_y = (self.end_pos[1] - self.end_pos[0] * coeff_x)
+        self.coord_y = [x*coeff_x + coeff_y for x in self.coord_x]
+        #self.coord_x, self.coord_y = np.meshgrid(x, y)
 
-    def sim_n_times(self, k, j, n):
+    def sim_n_times(self, k, n):
         """
 
         :param: k is the index of coord in list
         :param: n is how many times of simulation
         """
-        def sim_one_laserpos(self, k, j):
-
+        def sim_one_laserpos(self, k):
             def is_contain(point_list, b):
                 zeros = np.array([])
                 for j in range(len(point_list)):
                     zeros = np.append(zeros, b.contains(Point(point_list[j])))
                 return zeros
-
+            start = time.time()
             l = self.box_array
             r = self.radius
-            coord = list([np.asarray(self.coord_x)[k][j], np.asarray(self.coord_y)[k][j]])
+            coord = np.array([self.coord_x[k], self.coord_y[k]])
             n = self.num_points
-            noi = self.noise
             s = self.side
             center = self.one_pad_center
 
-            random_noi = np.random.uniform(-noi+1, 1+noi, 1)
-            n = math.ceil(random_noi*n)
+            n = math.ceil(n*np.random.uniform(-self.level+1, 1+self.level, 1))
 
-            random_points_x = np.random.uniform(coord[0] - r, coord[0] + r, n)
-            random_points_y = np.random.uniform(coord[1] - r, coord[1] + r, n)
-            random_points = list(zip(random_points_x, random_points_y))
+            random_points_off = np.random.uniform(- r, r, (n, 2))
+            random_points = np.add(coord, random_points_off)
 
-            charge_sum_left = np.count_nonzero(is_contain(random_points, l[1]))/n + int(np.random.normal(n/12,n/120))
-            charge_sum_center = np.count_nonzero(is_contain(random_points, l[0]))/n+ int(np.random.normal(n/12,n/120))
-            charge_sum_right = np.count_nonzero(is_contain(random_points, l[5]))/n+ int(np.random.normal(n/12,n/120))
+            list_charges = [is_contain(random_points, x).sum() for x in l]
+            list_noise = np.random.normal(n*self.noise_mean,n*self.noise_variance,(1, 9))
+            final_list = np.add(list_noise, list_charges).reshape((3,3))
 
-            charge_sum_upleft = np.count_nonzero(is_contain(random_points, l[2]))/n+ int(np.random.normal(n/12,n/120))
-            charge_sum_upcenter = np.count_nonzero(is_contain(random_points, l[3]))/n+ int(np.random.normal(n/12,n/120))
-            charge_sum_upright = np.count_nonzero(is_contain(random_points, l[4]))/n+ int(np.random.normal(n/12,n/120))
+            total = final_list.sum()
 
-            charge_sum_lowleft = np.count_nonzero(is_contain(random_points, l[8]))/n+ int(np.random.normal(n/12,n/120))
-            charge_sum_lowcenter = np.count_nonzero(is_contain(random_points, l[7]))/n+ int(np.random.normal(n/12,n/120))
-            charge_sum_lowright = np.count_nonzero(is_contain(random_points, l[6]))/n+ int(np.random.normal(n/12,n/120))
-
-            left_a_x = charge_sum_upleft + charge_sum_left + charge_sum_lowleft
-            center_a_x = charge_sum_upcenter + charge_sum_center + charge_sum_lowcenter
-            right_a_x = charge_sum_upright + charge_sum_right + charge_sum_lowright
-
-            up_a_y = charge_sum_upleft + charge_sum_upcenter + charge_sum_upright
-            center_a_y = charge_sum_left + charge_sum_center + charge_sum_right
-            low_a_y = charge_sum_lowleft + charge_sum_lowcenter + charge_sum_lowright
-
-            total = up_a_y + center_a_y + low_a_y
             if total == 0:
                 r_cons_x = self.side
                 r_cons_y = self.side
             else:
-                r_cons_x = (left_a_x * (center[0] - s) + center_a_x* center[0] + right_a_x * (center[0] + s))/total
-                r_cons_y = (up_a_y * (s + center[1]) + center_a_y * center[1] + low_a_y * (center[1] - s))/total
+                r_x_formula = np.array([(center[0] - s), center[0], center[0] + s])/total
+                r_y_formula = np.array([(center[1] + s), center[1], center[1]-s])/total
 
-            delta = ((r_cons_x - coord[0])**2 + (r_cons_y - coord[1])**2 )**0.5
-            return delta
+                r_cons_x = np.multiply(final_list, r_x_formula).sum()
+                r_cons_y = np.multiply(final_list.T, r_y_formula).sum()
+
+            delta = ((r_cons_x - coord[0])**2 + (r_cons_y - coord[1])**2)**0.5
+            end = time.time()
+            print(end-start)
+            s = np.array([final_list[1,0], final_list[1,1], final_list[1,2]])
+            c = np.array([r_cons_x, r_cons_y])
+            return delta, s, c
 
         temp = 0
+        temp_b = np.array([[0, 0, 0]])
+        temp_c = np.array([[0, 0]])
         for i in range(n):
-            temp += sim_one_laserpos(self, k, j)
-            coord = list([np.asarray(self.coord_x)[k][j], np.asarray(self.coord_y)[k][j]])
-        return temp/n
+            a,b,c = sim_one_laserpos(self, k)
+            temp += a
+            temp_b = np.append(temp_b, [b], axis=0)
+            temp_c = np.append(temp_c, [c], axis=0)
+        amp = np.sum(temp_b.tolist(), axis=0)/n
+        temp_c = np.sum(temp_c.tolist(), axis=0)/n
+        return temp/n, amp, temp_c
+
 
     def sim_n_coord(self, n):
+        start = time.time()
         length = len(self.coord_x)
-        self.amp = np.empty([length, length])
+        self.res = np.array([])
+        self.amplitude = np.array([[0, 0, 0]])
+        self.c = np.array([[0,0]])
         for g in range(length):
             print("iteration: %s Total: %s" %(g+1, length))
-            amp_k = np.array([])
-            for i in range(length):
-                print("subiteration: %s/%s" %(i+1, length))
-                amp_k = np.append(amp_k, [self.sim_n_times(g, i, n)])
-            self.amp[g] = amp_k
+            res, amplitude, c = self.sim_n_times(g, n)
+            self.res = np.append(self.res, res)
+            self.amplitude = np.append(self.amplitude, [amplitude], axis=0)
+            self.c = np.append(self.c, [c], axis=0)
+        self.amplitude = np.delete(self.amplitude, 0, 0)
+        self.c = np.delete(self.c, 0, 0)
+        print(self.c)
+        end = time.time()
+        print(end-start)
 
-    def load_csv(self, string):
-        s = self.side
-        self.coord_amp = np.empty([self.side, self.side])
-        df = pd.read_csv(string, index_col = [0,1])
-        df_amp = df.loc[['amp']]
-        df_list = df_amp.values.tolist()
-        arr = np.array(df_list)
-        self.amp = np.where(arr > s, s, arr)
 
-    def output_csv(self, string):
+    def output_csv(self,input):
+        file_name = input.file_name
         array_x = self.coord_x
         array_y = self.coord_y
-        array_amp = self.amp
-        arrays = np.append(np.append(array_x, array_y, axis=0), array_amp, axis=0)
-        col = np.arange(len(self.coord_x))
-        index_array = [['x_coord', 'y_coord', 'amp'], np.arange(len(self.coord_y)).tolist()]
-        ind = pd.MultiIndex.from_product(index_array, names=['coord', 'index'])
-        df = pd.DataFrame(arrays.tolist(), index=ind, columns = col)
-        df.to_csv(string)
+        array_amp = self.res
+        l = len(self.coord_x)
+        d = [array_x, array_y, array_amp]
+        df = pd.DataFrame(d, index=["x_coord", "y_coord", "amp"]).T
+
+        d2 = [('shape_of_one_pad',input.shape),
+        ('length_of_one_pad',input.side),
+        ('nose_start',input.nose_start),
+        ('nose_height_ratio',input.nose_height_ratio),
+        ('sin_height_ratio',input.sin_height_ratio),
+        ('radius_of_one_laser_spot',input.radius_uni),
+        ('number_of_charges_of_laser',input.n_times),
+        ('noise_mean',input.noise_mean),
+        ('noise_variance',input.noise_variance),
+        ('average_num',input.average_num),
+        ('number_of_laser_pos',input.num),
+        ('start_pos',input.start_pos),
+        ('end_pos',input.end_pos)]
+        l1 = [i[0] for i in d2]
+        l2 = [i[1] for i in d2]
+        list = [l1, l2]
+        df2 = pd.DataFrame(data=list, index=['input', 'value'])
+        data = df2.append([df])
+        data.to_csv(file_name + ".csv")
 
 
-#
-#
-# # test cases
-# side = 6
-# radius_uni = 1 # radius of random point around laser pos
-# n = 500 # number of points around one laser pos 500
-# noi = 0.2 # noise level between 1 and 0 0.2
-# num = 60 # num of laser positions 30
-# average_num = 5 #how many simulations at one laser pos 5
-#
-#
-# newPad = myPadArray(side)
-# newPad.get_one_square_box()
-# #newPad.modify_one_o_box(0.25, newPad.side/5) #start at 0.25 end at 0.75, height is 1/5 of the side
-# #newPad.modify_one_sin_box(0.25, 0.01, newPad.side/5) #start at 0.25, 0.01 is step, amplitude is side/5
-# newPad.calculate_center()
-# newPad.get_pad_nine()
-#
-# newSim = sim_anode()
-# newSim.get_parameters(newPad, radius_uni, n, noi)
-# newSim.get_coord_grid(num)
-# #run simulation
-# newSim.sim_n_coord(average_num)
-#
-# #export data
-# newSim.output_csv(r'/Users/roywu/Desktop/git_repo/Anode-Pad-Project/AnodeSimtest_o_123.csv')
-# #newSim.output_csv(r'/home/fjwu/cs/henry_sim/Anode-Pad-Project/AnodeSimtest.csv')
-# #read data
-#
-#
-#
-# #newSim.load_csv('AnodeSimtest_rbox.csv')
-# #newSim.load_csv('Anode_o.csv')
-#
-# print(newSim.coord_x[14])
-# print(newSim.coord_y[14])
-# print(newSim.amp[14])
-#
-#
-# #draw figures
-# fig = plt.figure(figsize = (16, 8))
-# #draw pad
-# ax = fig.add_subplot(221)
-# array5b = newSim.box_array
-# poly5a = array5b[0]
-# poly5b = array5b[1]
-# poly5c = array5b[2]
-# poly5d = array5b[3]
-# poly5e = array5b[4]
-# poly5f = array5b[5]
-# poly5g = array5b[6]
-# poly5h = array5b[7]
-# poly5i = array5b[8]
-# x5a, y5a = poly5a.exterior.xy
-# x5b, y5b = poly5b.exterior.xy
-# x5c, y5c = poly5c.exterior.xy
-# x5d, y5d = poly5d.exterior.xy
-# x5e, y5e = poly5e.exterior.xy
-# x5f, y5f = poly5f.exterior.xy
-# x5g, y5g = poly5g.exterior.xy
-# x5h, y5h = poly5h.exterior.xy
-# x5i, y5i = poly5i.exterior.xy
-# plt.plot(x5a, y5a, 'g', x5b, y5b, 'g', x5c, y5c, 'g', x5d, y5d, 'g',x5e, y5e, 'g', x5f, y5f, 'g', x5g, y5g, 'g',x5h, y5h, 'g', x5i, y5i, 'g')
-# plt.plot(newSim.coord_x, newSim.coord_y, 'ro', markersize=3)
-# plt.title('pad shape with coordinates in mm, red dots as laser positions')
-# ax.set_ylabel('Y axis')
-# #draw surface graph
-# # ax2 = fig.add_subplot(222, projection='3d',sharex=ax)
-# # ax2.set_title('Surface plot')
-# # s = ax2.plot_surface(newSim.coord_x, newSim.coord_y, newSim.amp, cmap=cm.coolwarm,
-# #                                linewidth=0, antialiased=False)
-# # plt.colorbar(s, shrink=0.5, aspect=5)
-# # ax2.set_xlabel('X axis')
-# # ax2.set_ylabel('Y axis')
-# # ax2.set_zlabel('Amplitude axis')
-# #draw heatmap
-# ax3 = fig.add_subplot(223)
-# df = pd.DataFrame({'x': np.around(newSim.coord_x.flatten().tolist(), decimals=0), 'amp': newSim.amp.flatten(), 'y': np.around(newSim.coord_y.flatten().tolist(), decimals=0)})
-# data_pivoted = df.pivot_table(index='y', columns='x', values='amp')
-# ax3 = sns.heatmap(data_pivoted, cmap='Greens')
-# ax3.invert_yaxis()
-# plt.title("distance between reconstructed laser position and actual laser position in mm")
-# plt.xlabel("laser position, x coordinate in mm")
-# plt.ylabel("laser position y coordinate in mm")
-#
-# ax4 = fig.add_subplot(224)
-# h = ax4.plot(newSim.coord_x[10], newSim.amp[10])
-# ax4.set_xlabel('Laser position x/mm')
-# ax4.set_ylabel('position resolution /mm')
-# ax4.grid()
-# plt.show()
 
 if __name__ == "__main__":
-    print("SimAnode")
-    print(__name__)
-else:
-    print("SimAnode run from import")
+    print("error:SimAnode is running as main")

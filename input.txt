@@ -1,0 +1,27 @@
+#define a pad
+shape_of_one_pad:sin
+length_of_one_pad:6
+nose_start:0.25
+nose_height_ratio:0.2
+sin_height_ratio:0.1
+
+#define a laser
+radius_of_one_laser_spot:4
+number_of_charges_of_laser:1000
+noise_mean:1e-2
+noise_variance:1e-3
+
+#define simulation
+number_of_simulation_at_one:3
+number_of_laser_pos:5
+start_pos:[-12,3]
+end_pos:[6,3]
+
+#output/import
+import_data:0
+output_data:1
+file_name:try1
+
+#draw graph
+
+

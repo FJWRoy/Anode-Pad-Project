@@ -1,12 +1,92 @@
 from AnodeSimulation import myPadArray
-from AnodeSimulation import sim_anode
-#
-
-def main():
-    f = open("input.txt", "w+")
-    f.close()
+from AnodeSimulation import SimAnode
+from AnodeSimulation import parameter as p
+from matplotlib import pyplot as plt
 
 
+def input():
+    input = p.parameter_from_txt()
+    if input.check_input():
+        if (input.import_data == 1):
+            input.load_csv()
+        return input
+    else:
+        return None
+
+def set_pad(input):
+    padArray = myPadArray.myPadArray(input.side)
+    padArray.get_one_square_box()
+    if (input.shape == "nose"):
+        padArray.modify_one_o_box(input.nose_start, input.side * input.nose_height_ratio)
+        print("shape is modified to nose")
+    elif (input.shape == 'sin'):
+        padArray.modify_one_sin_box(0.01, input.side * input.sin_height_ratio)
+        print("shape is modified to sin")
+
+    padArray.get_pad_nine()
+    padArray.calculate_center()
+    return padArray
+
+
+def set_sim(input, padArray):
+    simAnode = SimAnode.sim_anode()
+    simAnode.get_parameters(padArray, input.radius_uni, input.n_times, input.noise_mean, input.noise_variance, input.start_pos, input.end_pos)
+    simAnode.get_coord_grid(input.num)
+    return simAnode
+
+def run_sim(input, simAnode):
+    simAnode.sim_n_coord(input.average_num)
+    return simAnode
+
+def draw_pattern(SimAnode, t, n, z, show):
+    #draw figures
+    #draw pad
+    ax = fig.add_subplot(t,n,z)
+    array5b = SimAnode.box_array
+    poly5a = array5b[0]
+    poly5b = array5b[1]
+    poly5c = array5b[2]
+    poly5d = array5b[3]
+    poly5e = array5b[4]
+    poly5f = array5b[5]
+    poly5g = array5b[6]
+    poly5h = array5b[7]
+
+    poly5i = array5b[8]
+    x5a, y5a = poly5a.exterior.xy
+    x5b, y5b = poly5b.exterior.xy
+    x5c, y5c = poly5c.exterior.xy
+    x5d, y5d = poly5d.exterior.xy
+    x5e, y5e = poly5e.exterior.xy
+    x5f, y5f = poly5f.exterior.xy
+    x5g, y5g = poly5g.exterior.xy
+    x5h, y5h = poly5h.exterior.xy
+    x5i, y5i = poly5i.exterior.xy
+    plt.plot(x5a, y5a, 'g', x5b, y5b, 'g', x5c, y5c, 'g', x5d, y5d, 'g',x5e, y5e, 'g', x5f, y5f, 'g', x5g, y5g, 'g',x5h, y5h, 'g', x5i, y5i, 'g')
+    plt.plot(SimAnode.coord_x, SimAnode.coord_y, 'ro', markersize=1)
+    plt.scatter(SimAnode.c[:,0],SimAnode.c[:,1])
+    plt.title('pad shape with coordinates in mm, red dots as laser positions')
+    ax.set_ylabel('Y axis')
+    ax.grid()
+    if (show == 1):
+        plt.show()
+
+def draw_amp_pos(SimAnode, t, n, z, show):
+    ax5 = fig.add_subplot(t, n, z)
+    ax5.plot(SimAnode.coord_x, SimAnode.amplitude[:,0])
+    ax5.plot(SimAnode.coord_x, SimAnode.amplitude[:,1])
+    ax5.plot(SimAnode.coord_x, SimAnode.amplitude[:,2])
+    if (show == 1):
+        plt.show()
+
+def draw_res_pos(SimAnode, t, n, z, show):
+    ax4 = fig.add_subplot(t, n, z)
+    h = ax4.plot(SimAnode.coord_x, SimAnode.res)
+    ax4.set_xlabel('Laser position x/mm')
+    ax4.set_ylabel('position resolution /mm')
+    ax4.grid()
+    if (show == 1):
+        plt.show()
 #
 #
 # # test cases
@@ -45,35 +125,6 @@ def main():
 # print(newSim.coord_y[14])
 # print(newSim.amp[14])
 #
-#
-# #draw figures
-# fig = plt.figure(figsize = (16, 8))
-# #draw pad
-# ax = fig.add_subplot(221)
-# array5b = newSim.box_array
-# poly5a = array5b[0]
-# poly5b = array5b[1]
-# poly5c = array5b[2]
-# poly5d = array5b[3]
-# poly5e = array5b[4]
-# poly5f = array5b[5]
-# poly5g = array5b[6]
-# poly5h = array5b[7]
-
-# poly5i = array5b[8]
-# x5a, y5a = poly5a.exterior.xy
-# x5b, y5b = poly5b.exterior.xy
-# x5c, y5c = poly5c.exterior.xy
-# x5d, y5d = poly5d.exterior.xy
-# x5e, y5e = poly5e.exterior.xy
-# x5f, y5f = poly5f.exterior.xy
-# x5g, y5g = poly5g.exterior.xy
-# x5h, y5h = poly5h.exterior.xy
-# x5i, y5i = poly5i.exterior.xy
-# plt.plot(x5a, y5a, 'g', x5b, y5b, 'g', x5c, y5c, 'g', x5d, y5d, 'g',x5e, y5e, 'g', x5f, y5f, 'g', x5g, y5g, 'g',x5h, y5h, 'g', x5i, y5i, 'g')
-# plt.plot(newSim.coord_x, newSim.coord_y, 'ro', markersize=3)
-# plt.title('pad shape with coordinates in mm, red dots as laser positions')
-# ax.set_ylabel('Y axis')
 # #draw surface graph
 # # ax2 = fig.add_subplot(222, projection='3d',sharex=ax)
 # # ax2.set_title('Surface plot')
@@ -92,13 +143,23 @@ def main():
 # plt.title("distance between reconstructed laser position and actual laser position in mm")
 # plt.xlabel("laser position, x coordinate in mm")
 # plt.ylabel("laser position y coordinate in mm")
-#
-# ax4 = fig.add_subplot(224)
-# h = ax4.plot(newSim.coord_x[10], newSim.amp[10])
-# ax4.set_xlabel('Laser position x/mm')
-# ax4.set_ylabel('position resolution /mm')
-# ax4.grid()
-# plt.show()
+
 
 if __name__ == "__main__":
-    main()
+    input = input()
+    # if (input != None):
+    if ((input.outport_data == 1) and (input != None)):
+        myPad = set_pad(input)
+        set_sim = set_sim(input, myPad)
+        run_sim(input, set_sim)
+        #set_sim.output_csv(input)
+        fig = plt.figure(figsize=(12,8))
+        draw_pattern(set_sim, 2, 2, 1 ,0)
+        draw_amp_pos(set_sim, 2, 2, 2, 0)
+        draw_res_pos(set_sim, 2, 2, 3, 1)
+
+    elif (input.import_data == 1):
+        print("import input from existing datafile")
+
+    else:
+        print("error input is None")
