@@ -52,26 +52,17 @@ class parameter_from_txt():
         ["file_name", self.file_name]],
         ["input", "value", "Notes"], tablefmt="grid"))
 
-    def check_input(self):
-        if (self.import_data == self.outport_data):
-            print("error: input data has error")
-            return False
-        else:
-            return True
+    # def check_input(self):
+    #     if (self.import_data == self.outport_data):
+    #         print("error: input data has error")
+    #         return False
+    #     else:
+    #         return True
 
     # def load_csv(self):
     #     file_name = input.file_name
     #     df = pd.read_csv(file_name, index_col['amp', 'x_coord', 'y_coord'])
     #     print(df)
-
-            # s = self.side
-            # self.coord_amp = np.empty([self.side, self.side])
-            # df = pd.read_csv(string, index_col = [0,1])
-            # df_amp = df.loc[['amp']]
-            # df_list = df_amp.values.tolist()
-            # arr = np.array(df_list)
-            # self.amp = np.where(arr > s, s, arr)
-
 
 
 if __name__ == "__main__":

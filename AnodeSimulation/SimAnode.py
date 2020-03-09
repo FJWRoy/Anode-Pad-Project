@@ -12,33 +12,23 @@ import seaborn as sns
 import time
 
 class sim_anode:
-    def __init__(self):
-        self.box_array = None
-        self.side = None
-        self.radius = None
-        self.start_pos = None
-        self.end_pos = None
+    def __init__(self, padArray, r, n, noise_mean, noise_variance, start_pos, end_pos):
+        self.box_array = padArray.box_array
+        self.side = padArray.side
+        self.radius = r
+        self.start_pos = start_pos
+        self.end_pos = end_pos
         self.coord_x = None
         self.coord_y = None
-        self.num_points = None  # how many points around one laser pos
-        self.noise_mean = None
-        self.noise_variance = None
+        self.num_points = n  # how many points around one laser pos
+        self.noise_mean = noise_mean
+        self.noise_variance = noise_variance
         self.res = None
-        self.one_pad_center = None
+        self.one_pad_center = [padArray.center_x, padArray.center_y]
         self.level = 0
         self.amplitude = None
         self.c = None
-
-    def get_parameters(self, padArray, r, n, noise_mean, noise_variance, start_pos, end_pos):
-        self.box_array = padArray.box_array
-        self.side = padArray.side
-        self.start_pos = start_pos
-        self.end_pos = end_pos
-        self.noise_mean = noise_mean
-        self.noise_variance = noise_variance
-        self.radius = r
-        self.num_points = n  # how many points around one laser pos
-        self.one_pad_center = [padArray.center_x, padArray.center_y]
+        self.ran = None
 
     def get_coord_grid(self, num):
         #x = np.linspace(-2 * self.side, self.side, num=num)
@@ -61,6 +51,7 @@ class sim_anode:
                 for j in range(len(point_list)):
                     zeros = np.append(zeros, b.contains(Point(point_list[j])))
                 return zeros
+
             start = time.time()
             l = self.box_array
             r = self.radius
@@ -71,8 +62,15 @@ class sim_anode:
 
             n = math.ceil(n*np.random.uniform(-self.level+1, 1+self.level, 1))
 
-            random_points_off = np.random.uniform(- r, r, (n, 2))
-            random_points = np.add(coord, random_points_off)
+            theta = np.linspace(0, 2*np.pi, n)
+            a, b = 1 * np.cos(theta), 1 * np.sin(theta)
+            r = np.random.rand((n)) * r
+            x, y =  r * np.cos(theta) + coord[0], r * np.sin(theta)+coord[1]
+            random_points = np.array(list(zip(x,y)))
+            # random_points_x = np.random.uniform(- r + coord[0], r + coord[0], n)
+            # random_points_y = compute_y(random_points_x, coord[0], coord[1], r)
+            # random_points = np.array(list(zip(random_points_x, random_points_y)))
+            # print(random_points)
 
             list_charges = [is_contain(random_points, x).sum() for x in l]
             list_noise = np.random.normal(n*self.noise_mean,n*self.noise_variance,(1, 9))
@@ -95,20 +93,19 @@ class sim_anode:
             print(end-start)
             s = np.array([final_list[1,0], final_list[1,1], final_list[1,2]])
             c = np.array([r_cons_x, r_cons_y])
-            return delta, s, c
+            return delta, s, c, random_points
 
         temp = 0
         temp_b = np.array([[0, 0, 0]])
         temp_c = np.array([[0, 0]])
         for i in range(n):
-            a,b,c = sim_one_laserpos(self, k)
+            a,b,c,r = sim_one_laserpos(self, k)
             temp += a
             temp_b = np.append(temp_b, [b], axis=0)
             temp_c = np.append(temp_c, [c], axis=0)
         amp = np.sum(temp_b.tolist(), axis=0)/n
         temp_c = np.sum(temp_c.tolist(), axis=0)/n
-        return temp/n, amp, temp_c
-
+        return temp/n, amp, temp_c, r
 
     def sim_n_coord(self, n):
         start = time.time()
@@ -118,46 +115,47 @@ class sim_anode:
         self.c = np.array([[0,0]])
         for g in range(length):
             print("iteration: %s Total: %s" %(g+1, length))
-            res, amplitude, c = self.sim_n_times(g, n)
+            res, amplitude, c, r = self.sim_n_times(g, n)
             self.res = np.append(self.res, res)
             self.amplitude = np.append(self.amplitude, [amplitude], axis=0)
             self.c = np.append(self.c, [c], axis=0)
         self.amplitude = np.delete(self.amplitude, 0, 0)
         self.c = np.delete(self.c, 0, 0)
+        self.r = r
         print(self.c)
         end = time.time()
         print(end-start)
 
 
-    def output_csv(self,input):
-        file_name = input.file_name
-        array_x = self.coord_x
-        array_y = self.coord_y
-        array_amp = self.res
-        l = len(self.coord_x)
-        d = [array_x, array_y, array_amp]
-        df = pd.DataFrame(d, index=["x_coord", "y_coord", "amp"]).T
-
-        d2 = [('shape_of_one_pad',input.shape),
-        ('length_of_one_pad',input.side),
-        ('nose_start',input.nose_start),
-        ('nose_height_ratio',input.nose_height_ratio),
-        ('sin_height_ratio',input.sin_height_ratio),
-        ('radius_of_one_laser_spot',input.radius_uni),
-        ('number_of_charges_of_laser',input.n_times),
-        ('noise_mean',input.noise_mean),
-        ('noise_variance',input.noise_variance),
-        ('average_num',input.average_num),
-        ('number_of_laser_pos',input.num),
-        ('start_pos',input.start_pos),
-        ('end_pos',input.end_pos)]
-        l1 = [i[0] for i in d2]
-        l2 = [i[1] for i in d2]
-        list = [l1, l2]
-        df2 = pd.DataFrame(data=list, index=['input', 'value'])
-        data = df2.append([df])
-        data.to_csv(file_name + ".csv")
-
+    # def output_csv(self,input):
+    #     file_name = input.file_name
+    #     array_x = self.coord_x
+    #     array_y = self.coord_y
+    #     array_amp = self.res
+    #     l = len(self.coord_x)
+    #     d = [array_x, array_y, array_amp]
+    #     df = pd.DataFrame(d, index=["x_coord", "y_coord", "amp"]).T
+    #
+    #     d2 = [('shape_of_one_pad',input.shape),
+    #     ('length_of_one_pad',input.side),
+    #     ('nose_start',input.nose_start),
+    #     ('nose_height_ratio',input.nose_height_ratio),
+    #     ('sin_height_ratio',input.sin_height_ratio),
+    #     ('radius_of_one_laser_spot',input.radius_uni),
+    #     ('number_of_charges_of_laser',input.n_times),
+    #     ('noise_mean',input.noise_mean),
+    #     ('noise_variance',input.noise_variance),
+    #     ('average_num',input.average_num),
+    #     ('number_of_laser_pos',input.num),
+    #     ('start_pos',input.start_pos),
+    #     ('end_pos',input.end_pos)]
+    #     l1 = [i[0] for i in d2]
+    #     l2 = [i[1] for i in d2]
+    #     list = [l1, l2]
+    #     df2 = pd.DataFrame(data=list, index=['input', 'value'])
+    #     data = df2.append([df])
+    #     data.to_csv(file_name + ".csv")
+    #
 
 
 if __name__ == "__main__":

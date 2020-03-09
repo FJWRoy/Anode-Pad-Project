@@ -1,17 +1,12 @@
 from AnodeSimulation import myPadArray
 from AnodeSimulation import SimAnode
-from AnodeSimulation import parameter as p
+from AnodeSimulation import parameter
 from matplotlib import pyplot as plt
 
 
 def input():
-    input = p.parameter_from_txt()
-    if input.check_input():
-        if (input.import_data == 1):
-            input.load_csv()
-        return input
-    else:
-        return None
+    input = parameter.parameter_from_txt()
+    return input
 
 def set_pad(input):
     padArray = myPadArray.myPadArray(input.side)
@@ -22,16 +17,18 @@ def set_pad(input):
     elif (input.shape == 'sin'):
         padArray.modify_one_sin_box(0.01, input.side * input.sin_height_ratio)
         print("shape is modified to sin")
-
     padArray.get_pad_nine()
     padArray.calculate_center()
     return padArray
 
 
 def set_sim(input, padArray):
-    simAnode = SimAnode.sim_anode()
-    simAnode.get_parameters(padArray, input.radius_uni, input.n_times, input.noise_mean, input.noise_variance, input.start_pos, input.end_pos)
+    simAnode = SimAnode.sim_anode(padArray, input.radius_uni, input.n_times, input.noise_mean, input.noise_variance, input.start_pos, input.end_pos)
+    simAnode2 = SimAnode.sim_anode(padArray, input.radius_uni, input.n_times, input.noise_mean, input.noise_variance/10, input.start_pos, input.end_pos)
+    simAnode3 = SimAnode.sim_anode(padArray, input.radius_uni, input.n_times, input.noise_mean, input.noise_variance/100, input.start_pos, input.end_pos)
     simAnode.get_coord_grid(input.num)
+    simAnode2.get_coord_grid(input.num)
+    simAnode3.get_coord_grid(input.num)
     return simAnode
 
 def run_sim(input, simAnode):
@@ -66,6 +63,8 @@ def draw_pattern(SimAnode, t, n, z, show):
     plt.plot(SimAnode.coord_x, SimAnode.coord_y, 'ro', markersize=1)
     plt.scatter(SimAnode.c[:,0],SimAnode.c[:,1])
     plt.title('pad shape with coordinates in mm, red dots as laser positions')
+    ax.scatter(SimAnode.coord_x[-1], SimAnode.coord_y[-1])
+    ax.scatter(SimAnode.r[:,0], SimAnode.r[:,1])
     ax.set_ylabel('Y axis')
     ax.grid()
     if (show == 1):
@@ -79,9 +78,18 @@ def draw_amp_pos(SimAnode, t, n, z, show):
     if (show == 1):
         plt.show()
 
+def draw_radius(SimAnode, t, n, z, show):
+    ax7 = fig.add_subplot(t, n, z)
+    ax7.scatter(SimAnode.coord_x[-1], SimAnode.coord_y[-1])
+    ax7.scatter(SimAnode.r[:,0], SimAnode.r[:,1])
+    if (show == 1):
+        plt.show()
+
 def draw_res_pos(SimAnode, t, n, z, show):
     ax4 = fig.add_subplot(t, n, z)
-    h = ax4.plot(SimAnode.coord_x, SimAnode.res)
+    ax4.plot(SimAnode.coord_x, SimAnode.res)
+    # ax4.plot(SimAnode2.coord_x, SimAnode2.res)
+    # ax4.plot(SimAnode3.coord_x, SimAnode3.res)
     ax4.set_xlabel('Laser position x/mm')
     ax4.set_ylabel('position resolution /mm')
     ax4.grid()
@@ -148,7 +156,7 @@ def draw_res_pos(SimAnode, t, n, z, show):
 if __name__ == "__main__":
     input = input()
     # if (input != None):
-    if ((input.outport_data == 1) and (input != None)):
+    if (input != None):
         myPad = set_pad(input)
         set_sim = set_sim(input, myPad)
         run_sim(input, set_sim)
@@ -156,10 +164,7 @@ if __name__ == "__main__":
         fig = plt.figure(figsize=(12,8))
         draw_pattern(set_sim, 2, 2, 1 ,0)
         draw_amp_pos(set_sim, 2, 2, 2, 0)
+        #draw_radius(set_sim, 2, 2, 4, 0)
         draw_res_pos(set_sim, 2, 2, 3, 1)
-
-    elif (input.import_data == 1):
-        print("import input from existing datafile")
-
     else:
         print("error input is None")

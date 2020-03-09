@@ -62,16 +62,17 @@ class myPadArray:
     def modify_one_sin_box(self, step, amp):
         b = self.box
         s = self.side
-        x_sin_range = np.append(np.arange(0.25*s, s*0.75, step), s*0.75)
-
-        #x_sin_range = np.append(x_sin_range_temp)
-        print(x_sin_range)
-        y_range = amp * np.sin(((x_sin_range - 0.25*s)/(0.5*s))*2*np.pi)
-        print(y_range)
+        step = 0.01
+        start = 0.25
+        end= 0.75
+        x_sin_range_temp = np.arange(s * start, end*s, step)
+        #
+        x_sin_range = np.append(x_sin_range_temp, np.array(end * s))
+        y_range = amp * np.append(np.sin((x_sin_range_temp - start*s) * np.pi / (start * s)), np.array(0))
         sin_right = np.vstack([np.array([0, 0]),
                               np.vstack([np.array(list(zip(-1 * y_range, x_sin_range))),
                                          np.array([0, s])])])
-        sin_left = np.array(list(zip(y_range, x_sin_range)))
+        sin_left = np.array(list(zip(-1 * y_range - s, x_sin_range)))
         sin_down = np.vstack([np.array([0, 0]),
                              np.vstack([np.array(list(zip(-1 * x_sin_range, y_range))),
                                        np.array([-s, 0])])])
@@ -88,7 +89,7 @@ class myPadArray:
         box_after_up = unary_union(polygons)
         polygons = MultiPolygon([box_after_up, poly_left])
         box_final = unary_union(polygons)
-        self.box = poly_left
+        return box_final
 
     def calculate_center(self): #calculate the position of the center of the box
         point = self.box.centroid
