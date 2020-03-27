@@ -1,45 +1,31 @@
-from AnodeSimulation import myPadArray
-from AnodeSimulation import SimAnode
-from AnodeSimulation import parameter
+from AnodeSimulation.myPadArray import myPadArray
+from AnodeSimulation.SimAnode import sim_anode
+from AnodeSimulation.parameter import dictInput, input_check, display
 from matplotlib import pyplot as plt
+import sys
 
-
-def input():
-    input = parameter.parameter_from_txt()
-    return input
-
-def set_pad(input):
-    padArray = myPadArray.myPadArray(input.side)
-    padArray.get_one_square_box()
-    if (input.shape == "nose"):
-        padArray.modify_one_o_box(input.nose_start, input.side * input.nose_height_ratio)
-        print("shape is modified to nose")
-    elif (input.shape == 'sin'):
-        padArray.modify_one_sin_box(0.01, input.side * input.sin_height_ratio)
+def make():
+    pads = myPadArray(float(dictInput['length']))
+    if dictInput['shape'] == 'sin':
         print("shape is modified to sin")
-    padArray.get_pad_nine()
-    padArray.calculate_center()
-    return padArray
+        print("sin need to be implemneted")
+    elif dictInput['shape'] == 'nose':
+        print("shape is modified to nose")
+        pads.modify_one_n_box(float(dictInput['nose_start']), float(dictInput['length'])*float(dictInput['nose_height']))
+    elif dictInput['shape'] == 'regular':
+        pass
+    else:
+        print("wrong input pad shape")
+        sys.exit(0)
+    pads.get_pad_nine()
+    sim = sim_anode()
+    sim.get_coord_grid(int(dictInput['laser_positions']),list(eval(dictInput['start'])), list(eval(dictInput['end'])))
+    sim.run_sim(int(dictInput['average']), pads, float(dictInput['radius']), int(dictInput['charges']), float(dictInput['uncertainty']), float(dictInput['noise_mean']), float(dictInput['noise_variance']))
+    return pads, sim
 
-
-def set_sim(input, padArray):
-    simAnode = SimAnode.sim_anode(padArray, input.radius_uni, input.n_times, input.noise_mean, input.noise_variance, input.start_pos, input.end_pos)
-    simAnode2 = SimAnode.sim_anode(padArray, input.radius_uni, input.n_times, input.noise_mean, input.noise_variance/10, input.start_pos, input.end_pos)
-    simAnode3 = SimAnode.sim_anode(padArray, input.radius_uni, input.n_times, input.noise_mean, input.noise_variance/100, input.start_pos, input.end_pos)
-    simAnode.get_coord_grid(input.num)
-    simAnode2.get_coord_grid(input.num)
-    simAnode3.get_coord_grid(input.num)
-    return simAnode
-
-def run_sim(input, simAnode):
-    simAnode.sim_n_coord(input.average_num)
-    return simAnode
-
-def draw_pattern(SimAnode, t, n, z, show):
-    #draw figures
-    #draw pad
+def draw_pattern(a, t, n, z):
     ax = fig.add_subplot(t,n,z)
-    array5b = SimAnode.box_array
+    array5b = a.box_array
     poly5a = array5b[0]
     poly5b = array5b[1]
     poly5c = array5b[2]
@@ -60,15 +46,13 @@ def draw_pattern(SimAnode, t, n, z, show):
     x5h, y5h = poly5h.exterior.xy
     x5i, y5i = poly5i.exterior.xy
     plt.plot(x5a, y5a, 'g', x5b, y5b, 'g', x5c, y5c, 'g', x5d, y5d, 'g',x5e, y5e, 'g', x5f, y5f, 'g', x5g, y5g, 'g',x5h, y5h, 'g', x5i, y5i, 'g')
-    plt.plot(SimAnode.coord_x, SimAnode.coord_y, 'ro', markersize=1)
-    plt.scatter(SimAnode.c[:,0],SimAnode.c[:,1])
-    plt.title('pad shape with coordinates in mm, red dots as laser positions')
-    ax.scatter(SimAnode.coord_x[-1], SimAnode.coord_y[-1])
-    ax.scatter(SimAnode.r[:,0], SimAnode.r[:,1])
-    ax.set_ylabel('Y axis')
-    ax.grid()
-    if (show == 1):
-        plt.show()
+    # plt.plot(SimAnode.coord_x, SimAnode.coord_y, 'ro', markersize=1)
+    # plt.scatter(SimAnode.c[:,0],SimAnode.c[:,1])
+    # plt.title('pad shape with coordinates in mm, red dots as laser positions')
+    # ax.plot(SimAnode.coord_x[-1], SimAnode.coord_y[-1],'ro', markersize=3)
+    # ax.scatter(SimAnode.r[:,0], SimAnode.r[:,1])
+    # ax.set_ylabel('Y axis')
+    # ax.grid()
 
 def draw_amp_pos(SimAnode, t, n, z, show):
     ax5 = fig.add_subplot(t, n, z)
@@ -78,12 +62,11 @@ def draw_amp_pos(SimAnode, t, n, z, show):
     if (show == 1):
         plt.show()
 
-def draw_radius(SimAnode, t, n, z, show):
+def draw_radius(SimAnode, pad, t, n, z):
     ax7 = fig.add_subplot(t, n, z)
     ax7.scatter(SimAnode.coord_x[-1], SimAnode.coord_y[-1])
-    ax7.scatter(SimAnode.r[:,0], SimAnode.r[:,1])
-    if (show == 1):
-        plt.show()
+    draw_pattern(pad,t,n,z)
+    ax7.scatter(SimAnode.random_points[:,0], SimAnode.random_points[:,1])
 
 def draw_res_pos(SimAnode, t, n, z, show):
     ax4 = fig.add_subplot(t, n, z)
@@ -154,17 +137,16 @@ def draw_res_pos(SimAnode, t, n, z, show):
 
 
 if __name__ == "__main__":
-    input = input()
-    # if (input != None):
-    if (input != None):
-        myPad = set_pad(input)
-        set_sim = set_sim(input, myPad)
-        run_sim(input, set_sim)
-        #set_sim.output_csv(input)
-        fig = plt.figure(figsize=(12,8))
-        draw_pattern(set_sim, 2, 2, 1 ,0)
-        draw_amp_pos(set_sim, 2, 2, 2, 0)
-        #draw_radius(set_sim, 2, 2, 4, 0)
-        draw_res_pos(set_sim, 2, 2, 3, 1)
-    else:
-        print("error input is None")
+    # check if inputs are correct
+    display()
+    try:
+        input_check()
+    except Exception:
+        print("Error: Please enter either y or n")
+        sys.exit(0)
+    finally:
+        pad, sim = make()
+        fig = plt.figure(figsize=(12, 8))
+        draw_pattern(pad,2,1,1)
+        draw_radius(sim,pad,2,1,2)
+        plt.show()
