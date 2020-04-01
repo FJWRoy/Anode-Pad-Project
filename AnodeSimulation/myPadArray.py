@@ -1,9 +1,7 @@
-
 # we use shapely to define pad
 from shapely.geometry import LineString, MultiPolygon, MultiPoint, box, Polygon,Point
 from shapely.ops import split, unary_union
 import numpy as np
-
 
 
 class myPadArray:
@@ -23,7 +21,9 @@ class myPadArray:
         """
         s = self.side
         b = self.box
+        start = float(start)
         end = 1 - start
+        amp = s * float(amp)
         x,y = np.array([start, start, end, end])*s,np.array([0, amp, amp, 0])
         line_right = LineString(list(zip(-y,x)))
         line_down = LineString(list(zip(-x,y)))
@@ -38,38 +38,28 @@ class myPadArray:
         self.center_x = point.x
         self.center_y = point.y
 
-    # def modify_one_sin_box(self, step, amp):
-    #     b = self.box
-    #     s = self.side
-    #     step = 0.01
-    #     start = 0.25
-    #     end= 0.75
-    #     x_sin_range_temp = np.arange(s * start, end*s, step)
-    #     #
-    #     x_sin_range = np.append(x_sin_range_temp, np.array(end * s))
-    #     y_range = amp * np.append(np.sin((x_sin_range_temp - start*s) * np.pi / (start * s)), np.array(0))
-    #     sin_right = np.vstack([np.array([0, 0]),
-    #                           np.vstack([np.array(list(zip(-1 * y_range, x_sin_range))),
-    #                                      np.array([0, s])])])
-    #     sin_left = np.array(list(zip(-1 * y_range - s, x_sin_range)))
-    #     sin_down = np.vstack([np.array([0, 0]),
-    #                          np.vstack([np.array(list(zip(-1 * x_sin_range, y_range))),
-    #                                    np.array([-s, 0])])])
-    #     sin_up = np.array(list(zip(-1 * x_sin_range, y_range + s)))
-    #     # right down is for subtraction from the box, up left for union
-    #     line_right = LineString(sin_right.tolist())
-    #     line_down = LineString(sin_down.tolist())
-    #     poly_left = Polygon(sin_left.tolist())
-    #     poly_up = Polygon(sin_up.tolist())
-    #     # cut/combine
-    #     box_after_r = split(b, line_right)  # r is right
-    #     box_after_r_d = split(box_after_r[0], line_down)  # d is down, the first item is desired polygon
-    #     polygons = MultiPolygon([box_after_r_d[0], poly_up])  # intermediate between box_final and poly_left, up
-    #     box_after_up = unary_union(polygons)
-    #     polygons = MultiPolygon([box_after_up, poly_left])
-    #     box_final = unary_union(polygons)
-    #     return box_final
+    def modify_one_sin_box(self, step, amp):
+        s = self.side
+        x_range_left = np.arange(0, 0.5*s, step)
+        y_range_left = np.sin((x_range_left * np.pi)/ (0.5*s)) * float(amp) *s
+        x_range_right = np.arange(0.5*s, s, step)
+        y_range_right = -1*y_range_left
 
+        down_left_coords = np.array(list(zip(x_range_left-s, y_range_left)))
+        down_right_coords = np.array(list(zip(x_range_right-s, y_range_right)))
+        right_down_coords = np.array(list(zip(y_range_right, x_range_left)))
+        right_up_coords = np.array(list(zip(y_range_left, x_range_right)))
+
+        down_coords = np.array(list(down_left_coords) + list(down_right_coords) + [(0,0)])
+        up_coords = down_coords + [0,s]
+        right_coords = np.array(list(right_down_coords) + list(right_up_coords) + [(0,s)])
+        left_coords = right_coords + [-s,0]
+
+        b = Polygon(list(down_coords)+list(right_coords)+list(up_coords)[::-1]+list(left_coords)[::-1])
+        self.box = b
+        point = b.centroid
+        self.center_x = point.x
+        self.center_y = point.y
 
     def get_pad_nine(self):
         """
@@ -79,7 +69,7 @@ class myPadArray:
         s = self.side
         b = self.box
         lists = np.array(list(b.exterior.coords)).tolist()
-        off_set = np.array([[-s,s],[0,s],[s,s],[-s,0],[0,0],[s,0],[s,-s],[0,-s],[-s,-s]])
+        off_set = np.array([[-s,s],[0,s],[s,s],[-s,0],[0,0],[s,0],[-s,-s],[0,-s],[s,-s]])
         l_ext = [(x+lists).tolist() for x in off_set]
         list_poly = list([Polygon(x) for x in l_ext])
         self.box_array = list_poly
