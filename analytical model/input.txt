@@ -3,14 +3,14 @@ shape:nose
 #length of one unit pad, unit in mm
 length:6
 #if nose shape is picked, the start of a nose, range from 0 to 0.45
-nose_start:0.5
-nose_end:0.8
-nose_height:0.4
+nose_start:0.3
+nose_end:0.6
+nose_height:0.25
 sin_height:0.3
 
 #radius of a laser spot, unit in mm
 radius:3
-charges:1000
+charges:100000
 noise_mean:1e-2
 noise_variance:1e-3
 uncertainty:0.1
@@ -22,6 +22,6 @@ start:[-8,1]
 end:[8,1]
 
 #draw graph
-compare:yes
+compare:
 
 
