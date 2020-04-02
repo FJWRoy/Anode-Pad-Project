@@ -6,7 +6,7 @@ import numpy as np
 
 class myPadArray:
     def __init__(self, side):
-        b = box(-side, 0.0, 0.0, side)
+        b = box(-side/2, -side/2, side/2, side/2)
         point = b.centroid
         self.side = side
         self.box = b
@@ -14,7 +14,7 @@ class myPadArray:
         self.center_x = point.x
         self.center_y = point.y
 
-    def modify_one_n_box(self, start, amp):
+    def modify_one_n_box(self, start, end, amp):
         """
         Create a o box
 
@@ -22,9 +22,9 @@ class myPadArray:
         s = self.side
         b = self.box
         start = float(start)
-        end = 1 - start
+        end = float(end)
         amp = s * float(amp)
-        x,y = np.array([start, start, end, end])*s,np.array([0, amp, amp, 0])
+        x,y = np.array([start, start, end, end])*s - s/2,np.array([0, amp, amp, 0])-s/2
         line_right = LineString(list(zip(-y,x)))
         line_down = LineString(list(zip(-x,y)))
         poly_left = Polygon(list(zip(-y - s,x)))
@@ -50,9 +50,9 @@ class myPadArray:
         right_down_coords = np.array(list(zip(y_range_right, x_range_left)))
         right_up_coords = np.array(list(zip(y_range_left, x_range_right)))
 
-        down_coords = np.array(list(down_left_coords) + list(down_right_coords) + [(0,0)])
+        down_coords = np.array(list(down_left_coords) + list(down_right_coords) + [(0,0)]) + [s/2, -s/2]
         up_coords = down_coords + [0,s]
-        right_coords = np.array(list(right_down_coords) + list(right_up_coords) + [(0,s)])
+        right_coords = np.array(list(right_down_coords) + list(right_up_coords) + [(0,s)]) + [s/2, -s/2]
         left_coords = right_coords + [-s,0]
 
         b = Polygon(list(down_coords)+list(right_coords)+list(up_coords)[::-1]+list(left_coords)[::-1])

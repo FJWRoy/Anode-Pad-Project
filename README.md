@@ -1,6 +1,6 @@
 # Anode-Pad-Project
 
 To do:
-1. Modify main to draw figs in draft paper
-2. Some minor errors in the code 
+1. change x_coord to center pad
+2. understand amplitude to position
 3. clean 

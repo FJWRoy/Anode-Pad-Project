@@ -12,7 +12,7 @@ def make():
     if dictInput['shape'] == 'sin':
         pads.modify_one_sin_box(0.01, dictInput['sin_height'])
     elif dictInput['shape'] == 'nose':
-        pads.modify_one_n_box(dictInput['nose_start'], dictInput['nose_height'])
+        pads.modify_one_n_box(dictInput['nose_start'], dictInput['nose_end'], dictInput['nose_height'])
     elif dictInput['shape'] == 'regular':
         pass
     else:
@@ -22,6 +22,7 @@ def make():
     sim = sim_anode()
     sim.get_coord_grid(int(dictInput['laser_positions']),list(eval(dictInput['start'])), list(eval(dictInput['end'])))
     sim.run_sim(dictInput['average'], pads, dictInput['radius'], dictInput['charges'], dictInput['uncertainty'], dictInput['noise_mean'], dictInput['noise_variance'])
+    sim.update_end(pads)
     return pads, sim
 
 def draw_pattern(a, ax):
@@ -50,50 +51,90 @@ def draw_pattern(a, ax):
     ax.set_xlabel('x/mm')
     ax.set_ylabel('y/mm')
     ax.title.set_text('pad shape with coord in mm')
+    ax.minorticks_on()
+    ax.tick_params(which='both', width=3)
+    ax.tick_params(which='major', length=5, color='b')
+    ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.1, linestyle='-')
+    ax.grid(b=True, which='minor', axis='both', color='#000000', alpha=0.1, linestyle='-')
 
 def draw_radius(SimAnode, pad, ax):
     draw_pattern(pad, ax)
     ax.scatter(SimAnode.random_points[:,0], SimAnode.random_points[:,1], s=1, c='crimson', label='charges')
     ax.scatter(SimAnode.middle_point[0], SimAnode.middle_point[1], s=5, c='blue', label='actual laser position')
-    ax.legend(loc="best", fontsize='x-small')
+    ax.legend(loc=1, framealpha=0.5, fontsize='x-small')
     ax.set_xlabel('x/mm')
     ax.set_ylabel('y/mm')
     ax.title.set_text('pad shape with coord in mm')
+    ax.minorticks_on()
+    ax.tick_params(which='both', width=3)
+    ax.tick_params(which='major', length=5, color='b')
+    ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.1, linestyle='-')
+    ax.grid(b=True, which='minor', axis='both', color='#000000', alpha=0.1, linestyle='-')
 
 def draw_reconstructed(sim, pad, ax):
     draw_pattern(pad, ax)
-    ax.scatter(sim.reconstructed[:,0], sim.reconstructed[:,1], s=20, marker=1,c='black', label='reconstructed laser position')
-    ax.scatter(sim.coord_x, sim.coord_y, c='blue', s=15,label='actual laser position')
-    ax.legend(loc="best", fontsize='x-small')
+    ax.scatter(sim.reconstructed[:,0], sim.reconstructed[:,1], s=10,c='crimson', label='reconstructed laser position')
+    ax.scatter(sim.coord_x, sim.coord_y, c='blue', marker="_",label='actual laser position')
+    ax.legend(loc=1, framealpha=0.5, fontsize='x-small')
     ax.set_xlabel('x/mm')
     ax.set_ylabel('y/mm')
     ax.title.set_text('pad shape with coord in mm')
+    ax.minorticks_on()
+    ax.tick_params(which='both', width=3)
+    ax.tick_params(which='major', length=5, color='b')
+    ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.1, linestyle='-')
+    ax.grid(b=True, which='minor', axis='both', color='#000000', alpha=0.1, linestyle='-')
 
-def draw_amp_pos(SimAnode, ax):
+def draw_amp_pos(SimAnode, pad, ax):
+    ax.axvline(SimAnode.start, linestyle='-', color='aqua')
+    ax.axvline(SimAnode.end, linestyle='-', color='aqua')
     ax.plot(SimAnode.coord_x, SimAnode.amplitude[:,0],label='center-left pad')
     ax.plot(SimAnode.coord_x, SimAnode.amplitude[:,1],label='center pad')
     ax.plot(SimAnode.coord_x, SimAnode.amplitude[:,2],label='center-right pad')
-    ax.legend(loc="best", fontsize='x-small')
+    ax.legend(loc=1, framealpha=0.5, fontsize='x-small')
     ax.title.set_text('amplitude vs laser positions')
     ax.set_xlabel('x/mm')
     ax.set_ylabel('number of charges')
-    ax.grid()
+    ax.tick_params(which='both', width=3)
+    ax.tick_params(which='major', length=5, color='b')
+    ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.2, linestyle='-')
 
-def draw_res_pos(SimAnode, ax):
+def draw_res_pos(SimAnode, pad, ax):
     ax.plot(SimAnode.coord_x, SimAnode.res)
     ax.set_xlabel('Laser position x/mm')
     ax.set_ylabel('position resolution /mm')
     ax.title.set_text('resolution vs laser positions')
-    ax.grid()
+    ax.minorticks_on()
+    ax.tick_params(which='both', width=3)
+    ax.tick_params(which='major', length=5, color='b')
+    ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.2, linestyle='-')
+    ax.grid(which='minor', alpha=0.2, linestyle=':', linewidth='0.5', color='black')
+    ax.axvline(SimAnode.start, linestyle='-', color='g')
+    ax.axvline(SimAnode.end, linestyle='-', color='g')
 
-def draw_multiple():
+def draw_res_central_pos(SimAnode, pad, ax):
+    ax.plot(SimAnode.coord_x, SimAnode.res)
+    ax.set_xlim(SimAnode.start-pad.side/2,SimAnode.end+pad.side/2)
+    ax.set_ylim(0,1)
+    ax.minorticks_on()
+    ax.set_xlabel('Laser position x/mm')
+    ax.set_ylabel('position resolution /mm')
+    ax.title.set_text('resolution vs laser positions for central pad')
+    ax.tick_params(which='both', width=3)
+    ax.tick_params(which='major', length=5, color='b')
+    ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.2, linestyle='-')
+    ax.grid(which='minor', alpha=0.2, linestyle=':', linewidth='0.5', color='black')
+    ax.axvline(SimAnode.start, linestyle='-', color='g')
+    ax.axvline(SimAnode.end, linestyle='-', color='g')
+
+def draw_multiple(step):
     x_label = np.array([])
     y_list = list()
     x_list = np.array([])
     plt.figure(figsize=(8,8))
     if dictInput['shape']=='sin':
         plt.title('resolution vs laser positions for sin shape')
-        range1 = np.arange(0, 0.5, 0.15)
+        range1 = np.arange(0, 0.5, step)
         for i in tqdm(range(len(range1)), desc='compare multiple R/L ratio'):
             dictInput['sin_height']=float(range1[i])
             pad, sim = make()
@@ -101,7 +142,7 @@ def draw_multiple():
             x_label = np.append(x_label, [float(range1[i])])
             x_list = sim.coord_x
     elif dictInput['shape']=='nose':
-        range1 = np.arange(0, 0.25, 0.1)
+        range1 = np.arange(0, 0.5, step)
         plt.title('resolution vs laser positions for nose shape')
         for i in tqdm(range(len(range1)), desc='compare multiple R/L ratio'):
             dictInput['nose_height']=float(range1[i])
@@ -112,20 +153,21 @@ def draw_multiple():
     else:
         print("Error: regular shape has no parameter to compare")
         sys.exit(1)
-    [plt.plot(x_list, i, label="R/L ratio "+str(round(j,2))) for i,j in list(zip(y_list, x_label))]
+    [plt.plot(x_list, i, label="R/L ratio: "+str(round(j,2))) for i,j in list(zip(y_list, x_label))]
     plt.legend(loc="best", fontsize='x-small')
+    plt.savefig('nose_compare_height.pdf')
 
 def draw():
     pad, sim = make()
-    fig, axes = plt.subplots(3,2)
+    fig, axes = plt.subplots(3,2,figsize=(7.5,10))
     plt.setp(axes.flat, adjustable='box')
     draw_pattern(pad, axes[0,0])
     draw_radius(sim, pad, axes[0,1])
     draw_reconstructed(sim,pad,axes[1,0])
-    draw_amp_pos(sim, axes[2,0])
-    draw_res_pos(sim, axes[2,1])
+    draw_amp_pos(sim, pad, axes[1,1])
+    draw_res_pos(sim, pad,axes[2,0])
+    draw_res_central_pos(sim, pad, axes[2,1])
     fig.tight_layout()
-
 
 if __name__ == "__main__":
     # check if inputs are correct
@@ -137,7 +179,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     if dictInput['compare']=='yes':
-        draw_multiple()
+        draw_multiple(0.2)
         plt.show()
     else:
         draw()

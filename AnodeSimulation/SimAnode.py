@@ -16,17 +16,28 @@ class sim_anode:
     def __init__(self):
         self.coord_x = None
         self.coord_y = None
-        self.res = None
-        self.amplitude = None
+        self.res = list()
+        self.amplitude = list()
+        self.reconstructed = list()
         self.random_points = None
         self.middle_point = None
-        self.reconstructed = None
+        self.start = None
+        self.end = None
 
     def get_coord_grid(self, n_lasers, start, end):
         self.coord_x = np.linspace(start[0], end[0], n_lasers)
         coeff_x = (end[1] - start[1]) / (end[0] - start[0])
         coeff_y = (end[1] - end[0] * coeff_x)
         self.coord_y = [x*coeff_x + coeff_y for x in self.coord_x]
+
+    def update_end(self,pad):
+        b = pad.box
+        l = list(zip(self.coord_x, self.coord_y))
+        z = is_contain(l,b)
+        start = next(x for x, val in enumerate(z) if val > 0)
+        end = next(x for x, val in enumerate(z[start:]) if val < 1)
+        self.start = self.coord_x[start]
+        self.end = self.coord_x[end+start]
 
     def run_sim(self, average, myPadArray, radius, charges, uncertainty, mean, variance):
         average = int(average)
@@ -82,17 +93,15 @@ class sim_anode:
             temp_c = np.sum(temp_c.tolist(), axis=0)/average
             return temp/average, amp, temp_c
         length = len(self.coord_x)
-        self.res = np.array([])
-        self.amplitude = np.array([[0, 0, 0]])
-        self.reconstructed = np.array([[0,0]])
         for g in tqdm(range(length), leave=False, desc='iterating for specified shape'):
             res, amplitude, c = sim_n_times(g, average)
-            self.res = np.append(self.res, res)
-            self.amplitude = np.append(self.amplitude, [amplitude], axis=0)
-            self.reconstructed = np.append(self.reconstructed, [c], axis=0)
+            self.res.append(res)
+            self.amplitude.append(list(amplitude))
+            self.reconstructed.append(list(c))
             time.sleep(1)
-        self.amplitude = np.delete(self.amplitude, 0, 0)
-        self.reconstructed = np.delete(self.reconstructed, 0, 0)
+        self.res = np.array(self.res)
+        self.amplitude = np.array(self.amplitude)
+        self.reconstructed = np.array(self.reconstructed)
 
 
 if __name__ == "__main__":
