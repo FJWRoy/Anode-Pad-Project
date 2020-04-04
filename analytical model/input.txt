@@ -1,27 +1,27 @@
-#shape of a pad, choose from 'regular', 'nose', 'sin'
-shape:nose
-#length of one unit pad, unit in mm
+#shape: unit shape of a pad, choose from nose, regular, sin
+#length: length of unit pad
+#nose_start: where the nose starts, choose in range 0 to 0.5
+#nose_end: where the nose starts, choose in range 0.5 to 1
+#nose_height: tall of nose, range from 0 to value of nose_start
+#radius: radius of a laser spot
+#laser_positions: how many laser spots
+#start: specify a starting point of a laser path
+#end: specify a ending point of a laser path
+#compare: compare R/L ratios or not. Enter yes if so.
+
+shape:regular
 length:6
-#if nose shape is picked, the start of a nose, range from 0 to 0.45
-nose_start:0.3
+nose_start:0.4
 nose_end:0.6
-nose_height:0.25
+nose_height:0.35
 sin_height:0.3
 
-#radius of a laser spot, unit in mm
 radius:3
-charges:100000
-noise_mean:1e-2
-noise_variance:1e-3
-uncertainty:0.1
 
-#define simulation
-average:2
-laser_positions:50
-start:[-8,1]
-end:[8,1]
+laser_positions:100
+start:[-12,0]
+end:[12,0]
 
-#draw graph
-compare:
-
-
+compare:no
+step:0.2
+save:

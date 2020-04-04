@@ -19,90 +19,44 @@ class sim_anode:
         self.res = list()
         self.amplitude = list()
         self.reconstructed = list()
-        self.random_points = None
         self.middle_point = None
-        self.start = None
-        self.end = None
+        self.center_pads = list()
 
     def get_coord_grid(self, n_lasers, start, end):
         self.coord_x = np.linspace(start[0], end[0], n_lasers)
         coeff_x = (end[1] - start[1]) / (end[0] - start[0])
         coeff_y = (end[1] - end[0] * coeff_x)
         self.coord_y = [x*coeff_x + coeff_y for x in self.coord_x]
+        self.middle_point = [self.coord_x[math.ceil(len(self.coord_x)/2)],self.coord_y[math.ceil(len(self.coord_y)/2)]]
 
     def update_end(self,pad):
-        b = pad.box
-        l = list(zip(self.coord_x, self.coord_y))
-        z = is_contain(l,b)
-        start = next(x for x, val in enumerate(z) if val > 0)
-        end = next(x for x, val in enumerate(z[start:]) if val < 1)
-        self.start = self.coord_x[start]
-        self.end = self.coord_x[end+start]
+        lst_pad = [pad.box_array[11],pad.box_array[12],pad.box_array[13]]
+        lst_coord = list(zip(self.coord_x, self.coord_y))
+        z = [is_contain(lst_coord, b) for b in lst_pad]
+        left_start = self.coord_x[next(x for x, val in enumerate(z[0]) if val > 0)]
+        center_start = self.coord_x[next(x for x, val in enumerate(z[1]) if val > 0)]
+        right_start = self.coord_x[next(x for x, val in enumerate(z[2]) if val > 0)]
+        right_end = self.coord_x[len(self.coord_x) - next(x for x, val in enumerate(z[2][::-1]) if val > 0)]
+        self.center_pads = [left_start, center_start, right_start, right_end]
 
-    def run_sim(self, average, myPadArray, radius, charges, uncertainty, mean, variance):
-        average = int(average)
+    def run_sim(self, myPadArray, radius):
         radius = float(radius)
-        charges = int(charges)
-        uncertainty = float(uncertainty)
-        mean = float(mean)
-        variance = float(variance)
-        def sim_n_times(k,avergae):
-            def sim_one_laserpos(k):
-
-                coord = [self.coord_x[k], self.coord_y[k]]
-                center = [myPadArray.center_x, myPadArray.center_y]
-                cha = math.ceil(charges*np.random.uniform(-uncertainty+1, 1+uncertainty, 1))
-
-                theta = 2 * np.pi * np.random.uniform(0, 1, cha)
-                r = radius *  (np.random.uniform(0,1,cha))**0.5
-                x = r*np.cos(theta)
-                y = r*np.sin(theta)
-                random_points = np.stack((x+coord[0],y+coord[1]), axis=1)
-
-                list_charges = [is_contain(random_points, x).sum() for x in myPadArray.box_array]
-                list_noise = np.random.normal(cha*mean,cha*variance,(1, 9))
-                final_list = np.add(list_noise, list_charges).reshape((3,3))
-                total = final_list.sum()
-                if total == 0:
-                    print('cannot divide by 0')
-                    sys.exit(0)
-                else:
-                    r_x_formula = np.array([(center[0] - myPadArray.side), center[0], center[0] + myPadArray.side])/total
-                    r_y_formula = np.array([(center[1] + myPadArray.side), center[1], center[1]-myPadArray.side])/total
-
-                    r_cons_x = np.multiply(final_list, r_x_formula).sum()
-                    r_cons_y = np.multiply(final_list.T, r_y_formula).sum()
-
-                delta = ((r_cons_x - coord[0])**2 + (r_cons_y - coord[1])**2)**0.5
-                center_amps = np.array([final_list[1,0], final_list[1,1], final_list[1,2]])
-                res_r = np.array([r_cons_x, r_cons_y])
-                if k == math.ceil(len(self.coord_x)/2):
-                    self.middle_point = [self.coord_x[k], self.coord_y[k]]
-                    self.random_points = random_points
-                return delta, center_amps, res_r
-
-            temp = 0.0
-            temp_b = np.array([[0, 0, 0]])
-            temp_c = np.array([[0, 0]])
-            for _ in range(average):
-                delta,b,c = sim_one_laserpos(k)
-                temp += delta
-                temp_b = np.append(temp_b, [b], axis=0)
-                temp_c = np.append(temp_c, [c], axis=0)
-            amp = np.sum(temp_b.tolist(), axis=0)/average
-            temp_c = np.sum(temp_c.tolist(), axis=0)/average
-            return temp/average, amp, temp_c
-        length = len(self.coord_x)
-        for g in tqdm(range(length), leave=False, desc='iterating for specified shape'):
-            res, amplitude, c = sim_n_times(g, average)
-            self.res.append(res)
-            self.amplitude.append(list(amplitude))
-            self.reconstructed.append(list(c))
-            time.sleep(1)
-        self.res = np.array(self.res)
-        self.amplitude = np.array(self.amplitude)
-        self.reconstructed = np.array(self.reconstructed)
-
+        s = myPadArray.side
+        center = [myPadArray.center_x, myPadArray.center_y]
+        lst_coord = list(zip(self.coord_x, self.coord_y))
+        lst_spot = [Point(x,y).buffer(radius) for (x,y) in lst_coord]
+        lst_amp = [[x.intersection(b).area for x in lst_spot] for b in myPadArray.box_array]
+        for g in tqdm(range(len(lst_coord)), leave=False, desc='calculating resolution'):
+            pad_shape = np.array(lst_amp)[:,g].reshape(5,5)/lst_spot[0].area
+            coord = lst_coord[g]
+            x_formula = np.array([center[0] - 2*s, center[0] - s, center[0], center[0] + s, center[0] + 2*s])
+            y_formula = np.array([center[1] - 2*s, center[1] - s, center[1], center[1] + s, center[1] + 2*s])
+            cons_x = np.multiply(pad_shape, x_formula).sum()
+            cons_y = np.multiply(pad_shape.T, y_formula).sum()
+            delta = ((cons_x - coord[0])**2 + (cons_y - coord[1])**2)**0.5
+            self.reconstructed.append((cons_x, cons_y))
+            self.res.append(delta)
+            self.amplitude.append((pad_shape[2,1],pad_shape[2,2],pad_shape[2,3]))
 
 if __name__ == "__main__":
     print("error:SimAnode is running as main")
