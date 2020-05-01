@@ -29,7 +29,7 @@ class reconstruction:
             # Check if out of bounds:
             if(p[0]<0 or p[0]>= n or p[1]<0 or p[1]>= n):
                 continue
-            tmp = np.linalg.norm(event - lookup_table[:,p[0]+n*p[1]])
+            tmp = np.linalg.norm(event - lookup_table[:,p[0]+n*p[1]])#Chi square minimization
             if(var>tmp):
                 var = tmp
                 current = p
@@ -37,10 +37,10 @@ class reconstruction:
         
         return current
         
-    def variance(self, lookup_table, point):
+    def variance(self, lookup_table, point, radius):
         #We want to calculate deviation of position, using partial derivative of ith pad signal dPi/dx and dPi/dy.
         #The variation of p, calculated from experimental noise data 
-        var_p = 1
+        var_p = 0.015*np.pi*(radius ** 2)
         n = 100
         lookup_table = np.array(lookup_table)
         dPdx = [(lookup_table[:,point[0] + 1+n*point[1]] - lookup_table[:,point[0] - 1+n*point[1]])/2.0]
@@ -48,8 +48,8 @@ class reconstruction:
         var_x = var_p /np.linalg.norm(dPdx)
         var_y = var_p /np.linalg.norm(dPdy)
         return var_x, var_y
-    def sd(self, lookup_table, point):
-        vx, vy = self.variance(lookup_table, point)
+    def sd(self, lookup_table, point, radius):
+        vx, vy = self.variance(lookup_table, point, radius)
         return np.sqrt(vx+vy)
 
     #we can input a lookup table as events. When the input events table is identital to the reference lookup table, we can run degeneracy check on corresponing pad pattern.

@@ -21,11 +21,12 @@ class sim_anode:
         self.middle_point = None
         self.center_pads = list()
 
-    def get_coord_grid(self, n_lasers, start, end):
-        self.coord_x = np.linspace(start[0], end[0], n_lasers)#2 dimentional sampling points form a grid
-        coeff_x = (end[1] - start[1]) / (end[0] - start[0])
-        coeff_y = (end[1] - end[0] * coeff_x)#These coefficients are for non-axial sampling. Not currently used.
-        self.coord_y = np.linspace(start[0], end[0], n_lasers)#2 dimentional sampling points form a grid
+    def get_coord_grid(self, n_lasers, pad_size):
+        start = -2.5*pad_size
+        end = 2.5*pad_size
+        self.coord_x = np.linspace(start, end, n_lasers)#2 dimentional sampling points form a grid
+        
+        self.coord_y = np.linspace(start, end, n_lasers)#2 dimentional sampling points form a grid
         self.middle_point = [self.coord_x[math.ceil(len(self.coord_x)/2)],self.coord_y[math.ceil(len(self.coord_y)/2)]]#The center of the grid.
 
     def update_end(self,pad):

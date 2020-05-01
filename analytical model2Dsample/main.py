@@ -24,7 +24,7 @@ def make():
         sys.exit(1)
     pads.get_pad_5x5()
     sim = sim_anode()
-    sim.get_coord_grid(int(dictInput['laser_positions']),list(eval(dictInput['start'])), list(eval(dictInput['end'])))
+    sim.get_coord_grid(int(dictInput['laser_positions']), float(dictInput['length']))
     sim.update_end(pads)
     sim.run_sim(pads, dictInput['radius'])
     
@@ -46,7 +46,7 @@ def makeStep(filename):
     for i in range(0,int(dictInput['num_sim'])):
         
         sim = sim_anode()
-        sim.get_coord_grid(int(dictInput['laser_positions']),list(eval(dictInput['start'])), list(eval(dictInput['end'])))
+        sim.get_coord_grid(int(dictInput['laser_positions']),float(dictInput['length']))
         sim.update_end(pads)
         sim.run_sim(pads, float(dictInput['radius']) / (1+i * float(dictInput['length_incr'])/float(dictInput['length'])))
         sims.append(sim)
@@ -103,8 +103,8 @@ def draw_reconstructed(sim, pad, ax):
     draw_pattern(pad, ax)
     rec = reconstruction()
     recon_positions = [rec.reconstruction(np.array(sim.amplitude)[:, i],sim.amplitude) for i in tqdm(range(int(dictInput['laser_positions'])**2),leave=False, desc='reconstruction')]
-    p_x = [recon_positions[i][0] for i in range(len(recon_positions))]
-    p_y = [recon_positions[i][1] for i in range(len(recon_positions))]
+    p_x = [(recon_positions[i][0]/float(dictInput['laser_positions'])-0.5)*float(dictInput['length'])*5 for i in range(len(recon_positions))]
+    p_y = [(recon_positions[i][1]/float(dictInput['laser_positions'])-0.5)*float(dictInput['length'])*5 for i in range(len(recon_positions))]
     ax.scatter(p_x, p_y, s=10,c='crimson', label='reconstructed laser position')
     ax.scatter(np.array(sim.lst_coord)[:,0], np.array(sim.lst_coord)[:,1], c='blue', marker="_",label='actual laser position')
     ax.legend(loc=1, framealpha=0.7, fontsize='x-small')
@@ -124,7 +124,7 @@ def draw_sd_colorplot(sim, pad, ax):
     ry = [y for y in range(0, len(sim.coord_y)) if (-1.5*pad.side<sim.coord_y[y] and sim.coord_y[y]<1.5*pad.side)]
     X, Y = np.meshgrid([sim.coord_x[i] for i in rx],[sim.coord_y[i] for i in ry])
     rec = reconstruction()
-    pc = ax.pcolor(X,Y, [[rec.sd(sim.amplitude, (i,j)) for i in rx] for j in ry])
+    pc = ax.pcolor(X,Y, [[rec.sd(sim.amplitude, (i,j),float(dictInput['radius'])) for i in rx] for j in ry])
     plt.colorbar(pc, ax = ax)
     ax.set_xlabel('x/mm')
     ax.set_ylabel('y/mm')
@@ -139,7 +139,7 @@ def save_sd(sim, pad , i, filename):
     rx = [x for x in range(0, len(sim.coord_x)) if (-1.5*pad.side<sim.coord_x[x] and sim.coord_x[x]<1.5*pad.side)]#We are only plotting for the area of interest.
     ry = [y for y in range(0, len(sim.coord_y)) if (-1.5*pad.side<sim.coord_y[y] and sim.coord_y[y]<1.5*pad.side)]
     rec = reconstruction()
-    meaningful_res = [rec.sd(sim.amplitude, (i,j)) for i in rx for j in ry]
+    meaningful_res = [rec.sd(sim.amplitude, (i,j),float(dictInput['radius'])) for i in rx for j in ry]
     rms_res = np.sqrt(np.mean(np.square(meaningful_res)))
     mean_res = np.mean(meaningful_res)
     side = float(dictInput['length'])+i * float(dictInput['length_incr'])
@@ -166,7 +166,7 @@ def construct_table(filename):
     pads.get_pad_5x5()
     for i in range(0,int(dictInput['num_sim'])):
         sim = sim_anode()
-        sim.get_coord_grid(int(dictInput['laser_positions']),list(eval(dictInput['start'])), list(eval(dictInput['end'])))
+        sim.get_coord_grid(int(dictInput['laser_positions']),float(dictInput['length']))
         sim.update_end(pads)
         table = sim.run_sim_table(pads, float(dictInput['radius']) / (1+i * float(dictInput['length_incr'])/float(dictInput['length'])))
         with open(filename + '_'+dictInput['shape']+"_ratio_"+str((float(dictInput['length'])+i * float(dictInput['length_incr']))/float(dictInput['radius']))[0:5]+".pickle", 'wb') as f:
@@ -223,7 +223,7 @@ def draw():
     plt.setp(axes.flat, adjustable='box')
     draw_pattern(pad, axes[0,0])
     draw_radius(sim, pad, axes[0,1])
-    #draw_reconstructed(sim,pad,axes[1,0])
+    draw_reconstructed(sim,pad,axes[1,0])
     draw_sd_colorplot(sim, pad, axes[1,1])
     #draw_amp_pos(sim, pad, axes[1,1])
     #draw_res_pos(sim, pad,axes[2,0])
@@ -245,7 +245,7 @@ def draw_multiple(step):
             rec = reconstruction()
             rx = [x for x in range(0, len(sim.coord_x)) if (-1.5*pad.side<sim.coord_x[x] and sim.coord_x[x]<1.5*pad.side)]#We are only plotting for the area of interest.
             ry = [y for y in range(0, len(sim.coord_y)) if (-1.5*pad.side<sim.coord_y[y] and sim.coord_y[y]<1.5*pad.side)]
-            y_list.append(list([rec.sd(sim.amplitude, (i,j)) for i in rx for j in ry]))
+            y_list.append(list([rec.sd(sim.amplitude, (i,j), float(dictInput['radius'])) for i in rx for j in ry]))
             x_label = np.append(x_label, [float(range1[i])])
             x_list = sim.coord_x
     elif dictInput['shape']=='nose':
@@ -257,7 +257,7 @@ def draw_multiple(step):
             rec = reconstruction()
             rx = [x for x in range(0, len(sim.coord_x)) if (-1.5*pad.side<sim.coord_x[x] and sim.coord_x[x]<1.5*pad.side)]#We are only plotting for the area of interest.
             ry = [y for y in range(0, len(sim.coord_y)) if (-1.5*pad.side<sim.coord_y[y] and sim.coord_y[y]<1.5*pad.side)]
-            y_list.append(list([rec.sd(sim.amplitude, (i,j)) for i in rx for j in ry]))
+            y_list.append(list([rec.sd(sim.amplitude, (i,j), float(dictInput['radius'])) for i in rx for j in ry]))
             x_label = np.append(x_label, float(range1[i]))
             x_list = sim.coord_x
     else:
