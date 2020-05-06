@@ -50,9 +50,10 @@ class sim_anode:
         center = [myPadArray.center_x, myPadArray.center_y]#The center of the pad array.
         self.lst_coord = list((x,y) for x in self.coord_x for y in self.coord_y)#Define a grid from coord_x and coord_y
         lst_spot = [Point(x,y).buffer(radius) for (x,y) in self.lst_coord]
-        lst_amp = [[x.intersection(b).area for x in lst_spot] for b in myPadArray.box_array]
+        lst_amp = [[x.intersection(b).area for x in lst_spot] for b in tqdm(myPadArray.box_array, leave=False, desc = 'simulation')]
         return lst_amp
-        
+
+
 
 if __name__ == "__main__":
     print("error:SimAnode is running as main")

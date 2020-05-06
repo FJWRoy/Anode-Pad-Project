@@ -116,6 +116,13 @@ def draw_reconstructed(sim, pad, ax):
     ax.tick_params(which='major', length=5, color='b')
     ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.1, linestyle='-')
     ax.grid(b=True, which='minor', axis='both', color='#000000', alpha=0.1, linestyle='-')
+    with open("draw_reconstructed_lastrun.csv", 'a') as f:
+        for i in range(len(recon_positions)):
+            f.write(str(i)+','+str(p_x[i])+','+str(p_y[i])+'\n')
+    log = rec.degeneracy_check(recon_positions)
+    with open("draw_reconstructed_lastrun.log", 'w') as f:
+        f.write(log)
+
 
 #Draw the standard deviation plot from noise data
 def draw_sd_colorplot(sim, pad, ax):
@@ -124,22 +131,43 @@ def draw_sd_colorplot(sim, pad, ax):
     ry = [y for y in range(0, len(sim.coord_y)) if (-1.5*pad.side<sim.coord_y[y] and sim.coord_y[y]<1.5*pad.side)]
     X, Y = np.meshgrid([sim.coord_x[i] for i in rx],[sim.coord_y[i] for i in ry])
     rec = reconstruction()
-    pc = ax.pcolor(X,Y, [[rec.sd(sim.amplitude, (i,j),float(dictInput['radius'])) for i in rx] for j in ry])
+    S = [[rec.sd(sim.amplitude, (i,j),float(dictInput['radius']), 3*pad.side/float(dictInput['laser_positions'])) for i in rx] for j in tqdm(ry,leave=False,desc = 'SD calculation y' )]
+    pc = ax.pcolor(X,Y, S)
     plt.colorbar(pc, ax = ax)
     ax.set_xlabel('x/mm')
     ax.set_ylabel('y/mm')
-    ax.title.set_text('Standard Deviation of Reconstructed Position')
+    ax.title.set_text('Standard Deviation of Reconstruction[mm]')
     ax.minorticks_on()
     ax.tick_params(which='both', width=3)
     ax.tick_params(which='major', length=5, color='b')
     ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.1, linestyle='-')
     ax.grid(b=True, which='minor', axis='both', color='#000000', alpha=0.1, linestyle='-')
+    with open("draw_sd_colorplot_lastrun.csv", 'a') as f:
+        for x in range(len(rx)):
+            for y in range(len(ry)):
+                f.write(str(x+rx[0])+','+str(y+ry[0])+','+str(S[y][x])+'\n')
+def draw_sd_pos(sim, pad, y_offset, ax):
+    n = int(dictInput['laser_positions'])
+    ax.title.set_text('SD of reconstruction vs laser positions'+' y='+str(y_offset*5*pad.side/n))
+    ax.set_xlabel('x[mm]')
+    ax.set_ylabel('standard deviation[mm]')
+    ax.tick_params(which='both', width=3)
+    ax.tick_params(which='major', length=5, color='b')
+    ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.2, linestyle='-')
+    initpoint = n*int(n/2)
+    amp_indexed = np.array(sim.amplitude)[:,(initpoint+y_offset*n):(initpoint+(y_offset+1)*n)]
+    rec = reconstruction()
+    S = [rec.sd(sim.amplitude, (i,y_offset + int(n/2)),float(dictInput['radius']), 5*pad.side/float(dictInput['laser_positions'])) for i in range(n)] 
+    ax.plot(sim.coord_x, S,label='center-left pad')
+    with open("draw_sd_pos_lastrun.csv", 'a') as f:
+        for i in range(n):
+            f.write(str(sim.coord_x[i])+','+str(S[i])+'\n')
 def save_sd(sim, pad , i, filename):
     file_object = open(filename, 'a')
     rx = [x for x in range(0, len(sim.coord_x)) if (-1.5*pad.side<sim.coord_x[x] and sim.coord_x[x]<1.5*pad.side)]#We are only plotting for the area of interest.
     ry = [y for y in range(0, len(sim.coord_y)) if (-1.5*pad.side<sim.coord_y[y] and sim.coord_y[y]<1.5*pad.side)]
     rec = reconstruction()
-    meaningful_res = [rec.sd(sim.amplitude, (i,j),float(dictInput['radius'])) for i in rx for j in ry]
+    meaningful_res = [rec.sd(sim.amplitude, (i,j),float(dictInput['radius']), 5*pad.side/float(dictInput['laser_positions'])) for i in rx for j in ry]
     rms_res = np.sqrt(np.mean(np.square(meaningful_res)))
     mean_res = np.mean(meaningful_res)
     side = float(dictInput['length'])+i * float(dictInput['length_incr'])
@@ -172,21 +200,41 @@ def construct_table(filename):
         with open(filename + '_'+dictInput['shape']+"_ratio_"+str((float(dictInput['length'])+i * float(dictInput['length_incr']))/float(dictInput['radius']))[0:5]+".pickle", 'wb') as f:
             # Pickle the 'data' dictionary using the highest protocol available.
             pickle.dump(table, f, pickle.HIGHEST_PROTOCOL)
-        
-#Not used anymore
-def draw_amp_pos(SimAnode, pad, ax):
-    [ax.axvline(x, linestyle='-', color='darkblue') for x in SimAnode.center_pads]
-    ax.title.set_text('amplitude vs laser positions')
-    ax.set_xlabel('x/mm')
+ 
+def draw_amp_pos(SimAnode, pad, y_offset, ax):
+    #[ax.axvline(x, linestyle='-', color='darkblue') for x in SimAnode.center_pads]
+    n = int(dictInput['laser_positions'])
+    ax.title.set_text('amplitude vs laser positions'+' y='+str(y_offset*5*pad.side/n))
+    ax.set_xlabel('x[mm]')
     ax.set_ylabel('charges on the pad / total charges')
     ax.tick_params(which='both', width=3)
     ax.tick_params(which='major', length=5, color='b')
     ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.2, linestyle='-')
-    """
-    ax.plot(SimAnode.coord_x, np.array(SimAnode.amplitude)[:,0],label='center-left pad')
-    ax.plot(SimAnode.coord_x, np.array(SimAnode.amplitude)[:,1],label='center pad')
-    ax.plot(SimAnode.coord_x, np.array(SimAnode.amplitude)[:,2],label='center-right pad')
-    """
+    initpoint = n*int(n/2)
+    amp_indexed = np.array(SimAnode.amplitude)[:,(initpoint+y_offset*n):(initpoint+(y_offset+1)*n)]
+    ax.plot(SimAnode.coord_x, amp_indexed[7]/(np.pi*float(dictInput['radius'])**2),label='center-left pad')
+    ax.plot(SimAnode.coord_x, amp_indexed[12]/(np.pi*float(dictInput['radius'])**2),label='center pad')
+    ax.plot(SimAnode.coord_x, amp_indexed[17]/(np.pi*float(dictInput['radius'])**2),label='center-right pad')
+
+    ax.legend(loc=1, framealpha=0.5, fontsize='x-small')
+
+def draw_amp_noise_ratio_pos(SimAnode, pad, y_offset, ax):
+    noise_level = 0.011*np.pi*float(dictInput['radius'])**2
+    ax.set_yscale('log')
+    #[ax.axvline(x, linestyle='-', color='darkblue') for x in SimAnode.center_pads]
+    ax.title.set_text('amplitude+noise ratio vs laser positions'+' y='+str(y_offset*5*pad.side/float(dictInput['laser_positions'])))
+    ax.set_xlabel('x[mm]')
+    ax.set_ylabel('charges on the pad / total charges')
+    ax.tick_params(which='both', width=3)
+    ax.tick_params(which='major', length=5, color='b')
+    ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.2, linestyle='-')
+    n = int(dictInput['laser_positions'])
+    initpoint = n*int(n/2)
+    amp_indexed = np.array(SimAnode.amplitude)[:,(initpoint+y_offset*n):(initpoint+(y_offset+1)*n)]
+    ax.plot(SimAnode.coord_x, (amp_indexed[7]+noise_level)/(amp_indexed[12]+noise_level),label='center-left pad / center pad')
+    ax.plot(SimAnode.coord_x, (amp_indexed[17]+noise_level)/(amp_indexed[12]+noise_level),label='center-right pad / center pad')
+    ax.plot(SimAnode.coord_x, (amp_indexed[12]+noise_level)/(amp_indexed[7]+noise_level),label='center pad / center-left pad')
+    ax.plot(SimAnode.coord_x, (amp_indexed[12]+noise_level)/(amp_indexed[17]+noise_level),label='center pad / center-right pad')
     ax.legend(loc=1, framealpha=0.5, fontsize='x-small')
 #Not used
 def draw_res_pos(SimAnode, pad, ax):
@@ -223,11 +271,16 @@ def draw():
     plt.setp(axes.flat, adjustable='box')
     draw_pattern(pad, axes[0,0])
     draw_radius(sim, pad, axes[0,1])
-    draw_reconstructed(sim,pad,axes[1,0])
-    draw_sd_colorplot(sim, pad, axes[1,1])
-    #draw_amp_pos(sim, pad, axes[1,1])
+    #draw_reconstructed(sim,pad,axes[1,0])
+    draw_sd_colorplot(sim, pad, axes[2,0])
+    draw_sd_pos(sim, pad, 0, axes[2,1])
+    draw_amp_pos(sim, pad, 0, axes[1,0])
+    draw_amp_noise_ratio_pos(sim, pad, 0, axes[1,1])
+    #draw_amp_noise_ratio_pos(sim, pad, 2, axes[2,0])
+    #draw_amp_noise_ratio_pos(sim, pad, 6, axes[2,1])
     #draw_res_pos(sim, pad,axes[2,0])
     #draw_res_central_pos(sim, pad, axes[2,1])
+    #save_sd(sim, pad, 0,"lastrun")
     fig.tight_layout()
 
 def draw_multiple(step):
@@ -245,7 +298,7 @@ def draw_multiple(step):
             rec = reconstruction()
             rx = [x for x in range(0, len(sim.coord_x)) if (-1.5*pad.side<sim.coord_x[x] and sim.coord_x[x]<1.5*pad.side)]#We are only plotting for the area of interest.
             ry = [y for y in range(0, len(sim.coord_y)) if (-1.5*pad.side<sim.coord_y[y] and sim.coord_y[y]<1.5*pad.side)]
-            y_list.append(list([rec.sd(sim.amplitude, (i,j), float(dictInput['radius'])) for i in rx for j in ry]))
+            y_list.append(list([rec.sd(sim.amplitude, (i,j), float(dictInput['radius']), 5*pad.side/float(dictInput['laser_positions'])) for i in rx for j in ry]))
             x_label = np.append(x_label, [float(range1[i])])
             x_list = sim.coord_x
     elif dictInput['shape']=='nose':
@@ -257,7 +310,7 @@ def draw_multiple(step):
             rec = reconstruction()
             rx = [x for x in range(0, len(sim.coord_x)) if (-1.5*pad.side<sim.coord_x[x] and sim.coord_x[x]<1.5*pad.side)]#We are only plotting for the area of interest.
             ry = [y for y in range(0, len(sim.coord_y)) if (-1.5*pad.side<sim.coord_y[y] and sim.coord_y[y]<1.5*pad.side)]
-            y_list.append(list([rec.sd(sim.amplitude, (i,j), float(dictInput['radius'])) for i in rx for j in ry]))
+            y_list.append(list([rec.sd(sim.amplitude, (i,j), float(dictInput['radius']), 5*pad.side/float(dictInput['laser_positions'])) for i in rx for j in ry]))
             x_label = np.append(x_label, float(range1[i]))
             x_list = sim.coord_x
     else:
@@ -293,6 +346,8 @@ if __name__ == "__main__":
         construct_table(dictInput['lookup_table'])
     else:
         draw()
+       
+
         if dictInput['save']:
             plt.savefig(dictInput['save'])
         plt.show()
