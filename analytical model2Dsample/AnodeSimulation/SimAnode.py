@@ -2,6 +2,7 @@ import numpy as np
 import time
 import math
 import sys
+import pickle
 from tqdm import tqdm
 from shapely.geometry import LineString, MultiPolygon, MultiPoint, box, Polygon,Point
 
@@ -45,14 +46,12 @@ class sim_anode:
         self.amplitude = self.run_sim_table(myPadArray, radius)
     # saves lookup table of amplitudes.
     def run_sim_table(self, myPadArray, radius):
-        radius = float(radius)
-        s = myPadArray.side
-        center = [myPadArray.center_x, myPadArray.center_y]#The center of the pad array.
         self.lst_coord = list((x,y) for x in self.coord_x for y in self.coord_y)#Define a grid from coord_x and coord_y
         lst_spot = [Point(x,y).buffer(radius) for (x,y) in self.lst_coord]
         lst_amp = [[x.intersection(b).area for x in lst_spot] for b in tqdm(myPadArray.box_array, leave=False, desc = 'simulation')]
-        return lst_amp
-
+        return np.array(lst_amp)
+    def read_sim(self, filename):
+        self.amplitude = np.load(filename)
 
 
 if __name__ == "__main__":

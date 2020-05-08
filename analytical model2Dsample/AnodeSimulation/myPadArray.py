@@ -14,7 +14,10 @@ class myPadArray:
         self.box_array = None
         self.center_x = point.x
         self.center_y = point.y
-
+    def grid(self, div, x_ind, y_ind):
+        div = float(div)
+        side = self.side
+        return box(side/div*x_ind-side/(2*div),side/div*y_ind-side/(2*div) ,side/div*x_ind+side/(2*div),side/div*y_ind+side/(2*div)).buffer(side/div/100000)
     def modify_one_n_box(self, start, end, amp):
         """
 
@@ -36,6 +39,24 @@ class myPadArray:
         spl = split(split(b, line_right)[0], line_down)[0]
         poly = unary_union(MultiPolygon([spl, poly_up]))
         new_box = unary_union(MultiPolygon([poly, poly_left]))
+        self.box = new_box
+        point = new_box.centroid
+        self.center_x = point.x
+        self.center_y = point.y
+    def modify_one_cross_box(self):
+        """
+
+        modify a nose box
+        param: takes
+        return: update unit box, update center of pad
+
+        """
+        center_sq = self.grid(5,0,0)
+        rect_up = unary_union(MultiPolygon([self.grid(5,0,1),self.grid(5,0,2),self.grid(5,1,2),self.grid(5,2,2),self.grid(5,1,3),self.grid(5,1,4)]))
+        rect_down = unary_union(MultiPolygon([self.grid(5,0,-1),self.grid(5,0,-2),self.grid(5,-1,-2),self.grid(5,-2,-2),self.grid(5,-1,-3),self.grid(5,-1,-4)]))
+        rect_left = unary_union(MultiPolygon([self.grid(5,1,0),self.grid(5,2,0),self.grid(5,2,-1),self.grid(5,2,-2),self.grid(5,3,-1),self.grid(5,4,-1)]))
+        rect_right = unary_union(MultiPolygon([self.grid(5,-1,0),self.grid(5,-2,0),self.grid(5,-2,1),self.grid(5,-2,2),self.grid(5,-3,1),self.grid(5,-4,1)]))
+        new_box = unary_union(MultiPolygon([center_sq, rect_up, rect_down, rect_left, rect_right]))
         self.box = new_box
         point = new_box.centroid
         self.center_x = point.x

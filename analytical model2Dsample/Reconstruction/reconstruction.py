@@ -56,8 +56,7 @@ class reconstruction:
         #We want to calculate deviation of position, using partial derivative of ith pad signal dPi/dx and dPi/dy.
         #The variation of p, calculated from experimental noise data 
         var_p = (0.015*np.pi*(radius ** 2))**2
-        lookup_table = np.array(lookup_table)
-        n = int(np.sqrt(np.size(lookup_table, 1)))
+        #lookup_table = np.array(lookup_table)
         k = self.jacobian_inv(lookup_table, point, scale)
         var_x = var_p * np.linalg.norm(k[0])
         var_y = var_p * np.linalg.norm(k[1])
@@ -68,7 +67,7 @@ class reconstruction:
         return np.sqrt(vx+vy)
     #lookup_table = [pad_num] x [sampling points]
     def jacobian(self, lookup_table, point, scale):
-        lookup_table = np.array(lookup_table)
+        #lookup_table = np.array(lookup_table)
         n = int(np.sqrt(np.size(lookup_table, 1)))
         #We take the difference of i+1, i-1 instead of i+1, i to prevent biases.
         dPdx = (lookup_table[:,point[0] + 1+n*point[1]] - lookup_table[:,point[0] - 1+n*point[1]])/(2.0*scale)
