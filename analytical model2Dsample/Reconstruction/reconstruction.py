@@ -3,6 +3,10 @@ from matplotlib import pyplot as plt
 from tqdm import tqdm
 import numpy as np
 class reconstruction:
+    def __init__(self):
+        self.log = ""
+        np.seterr(all='raise')
+    
     #This reconstruction is for 3x3 pads. 
     def reconstruction(self, event, lookup_table):
         event = np.array(event)
@@ -60,6 +64,10 @@ class reconstruction:
         k = self.jacobian_inv(lookup_table, point, scale)
         var_x = var_p * np.linalg.norm(k[0])
         var_y = var_p * np.linalg.norm(k[1])
+        if(var_x ==0):
+            var_x = float('inf')
+        if(var_y ==0):
+            var_x = float('inf')
         return var_x, var_y
     #lookup_table = [pad_num] x [sampling points]
     def sd(self, lookup_table, point, radius, scale):
@@ -75,10 +83,19 @@ class reconstruction:
         return dPdx, dPdy
     def jacobian_inv(self, lookup_table, point, scale):
         dPdx , dPdy = self.jacobian(lookup_table, point, scale)
+        n = int(np.sqrt(np.size(lookup_table, 1)))
         j = np.column_stack((dPdx,dPdy))
         s = np.array([[np.linalg.norm(dPdy)**2, (-1)*np.dot(dPdx, dPdy)],[(-1)*np.dot(dPdx, dPdy),np.linalg.norm(dPdx)**2]])
-        s = s / np.linalg.det(s)
+        try:
+            s = s / np.linalg.det(s)
+        except:
+            self.log+= 'Degeneracy at ('+str((point[0]-0.5*n)*scale)+','+str((point[1]-0.5*n)*scale)+'):\ndPdx:\n'+np.array_str(np.reshape(dPdx, (5,5)))+'\ndPdy:\n'+np.array_str(np.reshape(dPdy, (5,5)))+'\n'
+            
         return np.dot(s,  np.transpose(j))
+    def clear_log(self):
+        self.log = ""
+    def print_log(self):
+        return self.log
 
 
     #we can input a lookup table as events. When the input events table is identital to the reference lookup table, we can run degeneracy check on corresponing pad pattern.

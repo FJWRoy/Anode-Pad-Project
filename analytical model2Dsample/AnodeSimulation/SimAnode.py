@@ -25,9 +25,10 @@ class sim_anode:
     def get_coord_grid(self, n_lasers, pad_size):
         start = -2.5*pad_size
         end = 2.5*pad_size
-        self.coord_x = np.linspace(start, end, n_lasers)#2 dimentional sampling points form a grid
-        
-        self.coord_y = np.linspace(start, end, n_lasers)#2 dimentional sampling points form a grid
+        self.coord_x = np.linspace(start, end, n_lasers+1)#2 dimentional sampling points form a grid. For sake of symmetry, 1 is added.
+        self.coord_x =  self.coord_x[:-1]
+        self.coord_y = np.linspace(start, end, n_lasers+1)#2 dimentional sampling points form a grid
+        self.coord_y =  self.coord_y[:-1]
         self.middle_point = [self.coord_x[math.ceil(len(self.coord_x)/2)],self.coord_y[math.ceil(len(self.coord_y)/2)]]#The center of the grid.
 
     def update_end(self,pad):
@@ -46,9 +47,11 @@ class sim_anode:
         self.amplitude = self.run_sim_table(myPadArray, radius)
     # saves lookup table of amplitudes.
     def run_sim_table(self, myPadArray, radius):
-        self.lst_coord = list((x,y) for x in self.coord_x for y in self.coord_y)#Define a grid from coord_x and coord_y
-        lst_spot = [Point(x,y).buffer(radius) for (x,y) in self.lst_coord]
-        lst_amp = [[x.intersection(b).area for x in lst_spot] for b in tqdm(myPadArray.box_array, leave=False, desc = 'simulation')]
+        self.lst_coord = list((x,y) for y in self.coord_y for x in self.coord_x)#Define a grid from coord_x and coord_y
+        #lst_spot = [Point(x,y).buffer(radius) for (x,y) in self.lst_coord]
+        #lst_amp = [[x.intersection(b).area for x in lst_spot] for b in tqdm(myPadArray.box_array, leave=False, desc = 'simulation')]
+        lst_amp = [[Point(x,y).buffer(radius).intersection(b).area for (x,y) in self.lst_coord] for b in tqdm(myPadArray.box_array, leave=False, desc = 'simulation')]
+        #More memory efficient to not use lst_spot. Speed implications?
         return np.array(lst_amp)
     def read_sim(self, filename):
         self.amplitude = np.load(filename)
