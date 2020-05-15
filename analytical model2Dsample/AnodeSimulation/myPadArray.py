@@ -18,6 +18,7 @@ class myPadArray:
         div = float(div)
         side = self.side
         return box(side/div*x_ind-side/(2*div),side/div*y_ind-side/(2*div) ,side/div*x_ind+side/(2*div),side/div*y_ind+side/(2*div)).buffer(side/div/100000)
+
     def modify_one_n_box(self, start, end, amp):
         """
 
@@ -43,6 +44,8 @@ class myPadArray:
         point = new_box.centroid
         self.center_x = point.x
         self.center_y = point.y
+
+
     def modify_one_cross_box(self):
         """
 
@@ -88,6 +91,32 @@ class myPadArray:
         point = b.centroid
         self.center_x = point.x
         self.center_y = point.y
+
+
+################################################################################################### I add the following function to make the 45 degree nose
+    def modify_one_45degree_n_box(self, start, end, amp, trapezoid_height):
+
+        s = self.side
+        b = self.box
+        start = float(start)
+        end = float(end)
+        amp = float(amp)
+        t_height = float(trapezoid_height) ##  0<= t_height <= 0.25
+
+        x = np.array([start, start, start + t_height, end - t_height, end, end])*s - s/2
+        y = np.array([0, amp, amp + t_height, amp + t_height, amp, 0])*s - s/2
+        line_right = LineString(list(zip(-y,x)))
+        line_down = LineString(list(zip(-x,y)))
+        poly_left = Polygon(list(zip(-y - s,x)))
+        poly_up = Polygon(list(zip(-x, y + s)))
+        spl = split(split(b, line_right)[0], line_down)[0]
+        poly = unary_union(MultiPolygon([spl, poly_up]))
+        new_box = unary_union(MultiPolygon([poly, poly_left]))
+        self.box = new_box
+        point = new_box.centroid
+        self.center_x = point.x
+        self.center_y = point.y
+
 
     def get_pad_nine(self):
         """

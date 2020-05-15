@@ -19,7 +19,10 @@ def make():
     elif dictInput['shape'] == 'nose':
         pads.modify_one_n_box(dictInput['nose_start'], dictInput['nose_end'], dictInput['nose_height'])
     elif dictInput['shape'] == 'cross':
-        pads.modify_one_cross_box()
+        pads.modify_one_cross_box(dictInput['nose_start'], dictInput['nose_end'], dictInput['nose_height'])
+############################################################################################################## i add a shape called 45nose
+    elif dictInput['shape'] == '45nose':
+        pads.modify_one_45degree_n_box(dictInput['nose_start'], dictInput['nose_end'], dictInput['nose_height'], dictInput['trapezoid_height'])
     elif dictInput['shape'] == 'regular':
         pass
     else:
@@ -34,7 +37,7 @@ def make():
     else:
         sim.run_sim(pads, float(dictInput['radius']))
         np.save("sim_lastrun.npy",sim.amplitude)
-    
+
     return pads, sim
 #Run simulations with differing pad size
 def makeStep(filename):
@@ -51,7 +54,7 @@ def makeStep(filename):
         sys.exit(1)
     pads.get_pad_5x5()
     for i in range(0,int(dictInput['num_sim'])):
-        
+
         sim = sim_anode()
         sim.get_coord_grid(int(dictInput['laser_positions']),float(dictInput['length']))
         sim.update_end(pads)
@@ -157,7 +160,7 @@ def draw_reconstructed(sim, pad, ax):
     ax.yaxis.set_major_locator(loc)
     ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.1, linestyle='-')
     ax.grid(b=True, which='minor', axis='both', color='#000000', alpha=0.1, linestyle='-')
-    
+
 
 
 #Draw the standard deviation plot from noise data
@@ -193,7 +196,7 @@ def draw_sd_colorplot(sim, pad, ax):
     ax.yaxis.set_major_locator(loc)
     ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.1, linestyle='-')
     ax.grid(b=True, which='minor', axis='both', color='#000000', alpha=0.1, linestyle='-')
-    
+
 def draw_sd_pos(sim, pad, y_offset, ax):
     n = int(dictInput['laser_positions'])
     #ax.title.set_text('SD of reconstruction vs ring positions'+' y='+str(y_offset*5*pad.side/n))
@@ -212,7 +215,7 @@ def draw_sd_pos(sim, pad, y_offset, ax):
     if dictInput['read']:
         S = np.load("draw_sd_pos_lastrun.npy")
     else:
-        S = [1000*rec.sd(sim.amplitude, (i,y_offset + int(n/2)),float(dictInput['radius']), 5*pad.side/float(dictInput['laser_positions'])) for i in range(n)] 
+        S = [1000*rec.sd(sim.amplitude, (i,y_offset + int(n/2)),float(dictInput['radius']), 5*pad.side/float(dictInput['laser_positions'])) for i in range(n)]
         np.save("draw_sd_pos_lastrun.npy", S)
     ax.plot(sim.coord_x[rx[0]:rx[len(rx)-1]], S[rx[0]:rx[len(rx)-1]],label='standard deviation')
     with open("draw_sd_pos_lastrun.csv", 'a') as f:
@@ -263,7 +266,7 @@ def construct_table(filename):
         with open(filename + '_'+dictInput['shape']+"_ratio_"+str((float(dictInput['length'])+i * float(dictInput['length_incr']))/float(dictInput['radius']))[0:5]+".pickle", 'wb') as f:
             # Pickle the 'data' dictionary using the highest protocol available.
             pickle.dump(table, f, pickle.HIGHEST_PROTOCOL)
- 
+
 def draw_amp_pos(SimAnode, pad, y_offset, ax):
     noise_level = 0.011*np.pi*float(dictInput['radius'])**2
     #[ax.axvline(x, linestyle='-', color='darkblue') for x in SimAnode.center_pads]
@@ -341,7 +344,7 @@ def draw_res_central_pos(SimAnode, pad, ax):
 
 def draw():
     pad, sim = make()
-    
+
     #fig, axes = plt.subplots(3,2,figsize=(7.5,10))
     #plt.setp(axes.flat, adjustable='box')
     plt.rcParams.update({'font.size': 12})

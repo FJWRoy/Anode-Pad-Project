@@ -9,18 +9,19 @@
 #end: specify a ending point of a laser path
 #compare: compare R/L ratios or not. Enter yes if so.
 
-shape:nose
+shape:45nose
 length:7.3
 length_incr:0.5
 num_sim:1
-nose_start:0.5
+nose_start:0.25
 nose_end:0.75
-nose_height:0.45
+trapezoid_height:0
+nose_height:0.25
 sin_height:0.3
 
 radius:3
 
-laser_positions:400
+laser_positions:100
 compare:no
 step:0.2
 save_sims:
