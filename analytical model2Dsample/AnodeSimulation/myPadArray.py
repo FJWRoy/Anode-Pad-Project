@@ -116,6 +116,26 @@ class myPadArray:
         point = new_box.centroid
         self.center_x = point.x
         self.center_y = point.y
+    def modify_one_wedge_n_box(self, start, end, amp):
+
+        s = self.side
+        b = self.box
+        start = float(start)
+        end = float(end)
+        amp = float(amp)
+        x = np.array([start, start, end, end])*s - s/2
+        y = np.array([0, amp, amp + end - start, 0])*s - s/2
+        line_right = LineString(list(zip(-y,x)))
+        line_down = LineString(list(zip(-x,y)))
+        poly_left = Polygon(list(zip(-y - s,x)))
+        poly_up = Polygon(list(zip(-x, y + s)))
+        spl = split(split(b, line_right)[0], line_down)[0]
+        poly = unary_union(MultiPolygon([spl, poly_up]))
+        new_box = unary_union(MultiPolygon([poly, poly_left]))
+        self.box = new_box
+        point = new_box.centroid
+        self.center_x = point.x
+        self.center_y = point.y
 
 
     def get_pad_nine(self):

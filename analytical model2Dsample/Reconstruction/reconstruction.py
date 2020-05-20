@@ -64,9 +64,9 @@ class reconstruction:
         k = self.jacobian_inv(lookup_table, point, scale)
         var_x = var_p * np.linalg.norm(k[0])
         var_y = var_p * np.linalg.norm(k[1])
-        if(var_x ==0):
+        if(var_x <0.001 or np.isnan(var_x)):#If less then 1 micron
             var_x = float('inf')
-        if(var_y ==0):
+        if(var_y <0.001 or np.isnan(var_y)):
             var_x = float('inf')
         return var_x, var_y
     #lookup_table = [pad_num] x [sampling points]

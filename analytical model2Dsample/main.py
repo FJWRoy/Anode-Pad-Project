@@ -22,7 +22,9 @@ def make():
         pads.modify_one_cross_box()
     elif dictInput['shape'] == '45nose':
         pads.modify_one_45degree_n_box(dictInput['nose_start'], dictInput['nose_end'], dictInput['pattern_height'], dictInput['trapezoid_height'])
-    elif dictInput['shape'] == 'regular':
+    elif dictInput['shape'] == '45wedge':
+        pads.modify_one_wedge_n_box(dictInput['nose_start'], dictInput['nose_end'], dictInput['pattern_height'])
+    elif dictInput['shape'] == 'square':
         pass
     else:
         print("wrong input pad shape")
@@ -40,7 +42,7 @@ def make():
     
     return pads, sim
 #Run simulations with differing pad size
-def makeStep(filename):
+def make_step():
     sims = list()
     pads = myPadArray(float(dictInput['length']))
     if dictInput['shape'] == 'sin':
@@ -51,7 +53,9 @@ def makeStep(filename):
         pads.modify_one_cross_box()
     elif dictInput['shape'] == '45nose':
         pads.modify_one_45degree_n_box(dictInput['nose_start'], dictInput['nose_end'], dictInput['pattern_height'], dictInput['trapezoid_height'])
-    elif dictInput['shape'] == 'regular':
+    elif dictInput['shape'] == '45wedge':
+        pads.modify_one_wedge_n_box(dictInput['nose_start'], dictInput['nose_end'], dictInput['pattern_height'])
+    elif dictInput['shape'] == 'square':
         pass
     else:
         print("wrong input pad shape")
@@ -64,7 +68,7 @@ def makeStep(filename):
         sim.update_end(pads)
         sim.run_sim(pads, float(dictInput['radius']) / (1+i * float(dictInput['length_incr'])/float(dictInput['length'])))
         sims.append(sim)
-        save_sd(sim, pads, i, filename)
+    
     return pads, sims
 def draw_pattern(a, ax):
     array = a.box_array
@@ -98,7 +102,7 @@ def draw_pattern(a, ax):
     ax.minorticks_on()
     ax.tick_params(which='both', width=3)
     ax.tick_params(which='major', length=5, color='b')
-    loc = plticker.MultipleLocator(base = float(dictInput['length'])) # this locator puts ticks at regular intervals
+    loc = plticker.MultipleLocator(base = float(dictInput['length'])) # this locator puts ticks at square intervals
     ax.xaxis.set_major_locator(loc)
     ax.yaxis.set_major_locator(loc)
     ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.1, linestyle='-')
@@ -123,7 +127,7 @@ def draw_radius(SimAnode, pad, ax):
     ax.minorticks_on()
     ax.tick_params(which='both', width=3)
     ax.tick_params(which='major', length=5, color='b')
-    loc = plticker.MultipleLocator(base = float(dictInput['length'])) # this locator puts ticks at regular intervals
+    loc = plticker.MultipleLocator(base = float(dictInput['length'])) # this locator puts ticks at square intervals
     ax.xaxis.set_major_locator(loc)
     ax.yaxis.set_major_locator(loc)
     ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.1, linestyle='-')
@@ -163,7 +167,7 @@ def draw_reconstructed(sim, pad, ax):
     ax.minorticks_on()
     ax.tick_params(which='both', width=3)
     ax.tick_params(which='major', length=5, color='b')
-    loc = plticker.MultipleLocator(base = float(dictInput['length'])) # this locator puts ticks at regular intervals
+    loc = plticker.MultipleLocator(base = float(dictInput['length'])) # this locator puts ticks at square intervals
     ax.xaxis.set_major_locator(loc)
     ax.yaxis.set_major_locator(loc)
     ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.1, linestyle='-')
@@ -206,7 +210,7 @@ def draw_sd_colorplot(sim, pad, ax):
     ax.minorticks_on()
     ax.tick_params(which='both', width=3)
     ax.tick_params(which='major', length=5, color='b')
-    loc = plticker.MultipleLocator(base = float(dictInput['length'])) # this locator puts ticks at regular intervals
+    loc = plticker.MultipleLocator(base = float(dictInput['length'])) # this locator puts ticks at square intervals
     ax.xaxis.set_major_locator(loc)
     ax.yaxis.set_major_locator(loc)
     ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.1, linestyle='-')
@@ -223,11 +227,14 @@ def draw_sd_colorplot_debug(sim, pad, ax):
     S = np.load(id+"_sd_colorplot.npy")
     outliers = list()
     rad = float(dictInput['radius'])
+    radunit = rad/(5*float(dictInput['length']))* float(dictInput['laser_positions'])
+    scale = 5* float(dictInput['length']) / float(dictInput['laser_positions'])
     for i in mx:
         for j in my:
-            if((S[i][j]<=1 or S[i][j]>2000) and not any((p[0]-i)**2+(p[1]-j)**2<2*rad**2 for p in outliers)):#filtering outliers 
+            if((S[i][j]<=1 or S[i][j]>4000) and not any((p[0]-i)**2+(p[1]-j)**2<0.7*radunit**2 for p in outliers)):#filtering outliers 
                 ax.add_artist(plt.Circle((sim.coord_x[i],sim.coord_y[j]), rad, alpha =0.4, color='crimson'))
                 ax.plot(sim.coord_x[i], sim.coord_y[j], c='b', marker='x')
+                ax.text(sim.coord_x[i], sim.coord_y[j], str((i - 0.5*len(sim.coord_x))* scale)+','+str((j - 0.5*len(sim.coord_y))* scale))
                 outliers.append((i,j))
     maxv = min(np.amax(S), 2000)
     pc = ax.pcolor(X,Y, S, vmax = maxv)
@@ -242,7 +249,7 @@ def draw_sd_colorplot_debug(sim, pad, ax):
     ax.minorticks_on()
     ax.tick_params(which='both', width=3)
     ax.tick_params(which='major', length=5, color='b')
-    loc = plticker.MultipleLocator(base = float(dictInput['length'])) # this locator puts ticks at regular intervals
+    loc = plticker.MultipleLocator(base = float(dictInput['length'])) # this locator puts ticks at square intervals
     ax.xaxis.set_major_locator(loc)
     ax.yaxis.set_major_locator(loc)
     ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.1, linestyle='-')
@@ -256,7 +263,7 @@ def draw_sd_pos(sim, pad, y_offset, ax):
     ax.set_ylabel('standard deviation[μm]')
     ax.tick_params(which='both', width=3)
     ax.tick_params(which='major', length=5, color='b')
-    loc = plticker.MultipleLocator(base = float(dictInput['length'])) # this locator puts ticks at regular intervals
+    loc = plticker.MultipleLocator(base = float(dictInput['length'])) # this locator puts ticks at square intervals
     ax.xaxis.set_major_locator(loc)
     ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.2, linestyle='-')
     initpoint = n*int(n/2)
@@ -279,22 +286,55 @@ def draw_sd_pos(sim, pad, y_offset, ax):
         for i in range(n):
             f.write(str(sim.coord_x[i])+','+str(S[i])+'\n')
             """
-def save_sd(sim, pad , i, filename):
-    file_object = open(filename, 'w')
-    rx = [x for x in range(0, len(sim.coord_x)) if (-1.5*pad.side<sim.coord_x[x] and sim.coord_x[x]<1.5*pad.side)]#We are only plotting for the area of interest.
-    ry = [y for y in range(0, len(sim.coord_y)) if (-1.5*pad.side<sim.coord_y[y] and sim.coord_y[y]<1.5*pad.side)]
-    rec = reconstruction()
-    meaningful_res = [rec.sd(sim.amplitude, (i,j),float(dictInput['radius']), 5*pad.side/float(dictInput['laser_positions'])) for i in rx for j in ry]
-    rms_res = np.sqrt(np.mean(np.square(meaningful_res)))
-    mean_res = np.mean(meaningful_res)
-    side = float(dictInput['length'])+i * float(dictInput['length_incr'])
-    side0 = float(dictInput['length'])
-    file_object.write(str(side/float(dictInput['radius'])))
-    file_object.write(',')
-    file_object.write(str(side/side0*mean_res))
-    file_object.write(',')
-    file_object.write(str(side/side0*rms_res))
-    file_object.write('\n')
+def save_sd(sims, pad, ax, filename):
+    file_object = open(filename+'.csv', 'w')
+    L_list = list()
+    median_res_list = list()
+    min_res_list = list()
+    max_res_list = list()
+    q3_res_list = list()
+    for i in range(0,int(dictInput['num_sim'])):
+        sim = sims[i]
+        rx = [x for x in range(0, len(sim.coord_x)) if (-1.5*pad.side<sim.coord_x[x] and sim.coord_x[x]<1.5*pad.side)]#We are only plotting for the area of interest.
+        ry = [y for y in range(0, len(sim.coord_y)) if (-1.5*pad.side<sim.coord_y[y] and sim.coord_y[y]<1.5*pad.side)]
+        rec = reconstruction()
+        meaningful_res = [1000*rec.sd(sim.amplitude, (i,j),float(dictInput['radius']), 5*pad.side/float(dictInput['laser_positions'])) for i in rx for j in ry]
+        median_res = np.median(meaningful_res)
+        median_res_list.append(median_res)
+        min_res = np.min(meaningful_res)
+        min_res_list.append(min_res)
+        max_res = np.max(meaningful_res)
+        max_res_list.append(max_res)
+        try:
+            q3_res = np.percentile(meaningful_res,75)
+        except:
+            q3_res = float('inf')
+        q3_res_list.append(q3_res)
+        side = float(dictInput['length'])+i * float(dictInput['length_incr'])
+        side0 = float(dictInput['length'])
+        L_list.append(side/float(dictInput['radius'])/2)
+        file_object.write(str(side/float(dictInput['radius'])))
+        file_object.write(',')
+        file_object.write(str(side/side0*min_res))
+        file_object.write(',')
+        file_object.write(str(side/side0*median_res))
+        file_object.write(',')
+        file_object.write(str(side/side0*q3_res))
+        file_object.write(',')
+        file_object.write(str(side/side0*max_res))
+        file_object.write('\n')
+    ax.text(1, 0, plotDesc()+'\n'+dictInput['length_incr']+'mm '+dictInput['num_sim']+'increments', verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
+    ax.set_xlabel('L')
+    ax.set_ylabel('standard deviation[μm]')
+    ax.plot(L_list, min_res_list, '-o',markersize = 4, label='minimal spot')
+    ax.plot(L_list, median_res_list,'-o',markersize = 4, label='median')
+    ax.plot(L_list, q3_res_list,'-o',markersize = 4, label='75% percentile')
+    #ax.plot(L_list, max_res_list,'-o',markersize = 4, label='maximal spot')
+    #ax.fill_between(L_list, min_res_list, q3_res_list, color = 'gray')
+
+    ax.legend(loc=1, framealpha=0.5, fontsize='medium')
+    maxv = min(np.amax(max_res_list), 2000)
+    ax.set_ylim(top = maxv, bottom=0)
 
 
 def construct_table(filename):
@@ -307,7 +347,9 @@ def construct_table(filename):
         pads.modify_one_cross_box()
     elif dictInput['shape'] == '45nose':
         pads.modify_one_45degree_n_box(dictInput['nose_start'], dictInput['nose_end'], dictInput['pattern_height'], dictInput['trapezoid_height'])
-    elif dictInput['shape'] == 'regular':
+    elif dictInput['shape'] == '45wedge':
+        pads.modify_one_wedge_n_box(dictInput['nose_start'], dictInput['nose_end'], dictInput['pattern_height'])
+    elif dictInput['shape'] == 'square':
         pass
     else:
         print("wrong input pad shape")
@@ -333,7 +375,7 @@ def draw_amp_pos(SimAnode, pad, y_offset, ax):
     ax.set_ylabel('charges on the pad / total charges')
     ax.tick_params(which='both', width=3)
     ax.tick_params(which='major', length=5, color='b')
-    loc = plticker.MultipleLocator(base = float(dictInput['length'])) # this locator puts ticks at regular intervals
+    loc = plticker.MultipleLocator(base = float(dictInput['length'])) # this locator puts ticks at square intervals
     ax.xaxis.set_major_locator(loc)
     ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.2, linestyle='-')
     initpoint = n*int(n/2)
@@ -357,7 +399,7 @@ def draw_amp_noise_ratio_pos(SimAnode, pad, y_offset, ax):
     ax.set_ylabel('ratio of charge on pads including noise')
     ax.tick_params(which='both', width=3)
     ax.tick_params(which='major', length=5, color='b')
-    loc = plticker.MultipleLocator(base = float(dictInput['length'])) # this locator puts ticks at regular intervals
+    loc = plticker.MultipleLocator(base = float(dictInput['length'])) # this locator puts ticks at square intervals
     ax.xaxis.set_major_locator(loc)
     ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.2, linestyle='-')
     n = int(dictInput['laser_positions'])
@@ -377,7 +419,7 @@ def draw_res_pos(SimAnode, pad, ax):
     ax.minorticks_on()
     ax.tick_params(which='both', width=3)
     ax.tick_params(which='major', length=5, color='b')
-    loc = plticker.MultipleLocator(base = float(dictInput['length'])) # this locator puts ticks at regular intervals
+    loc = plticker.MultipleLocator(base = float(dictInput['length'])) # this locator puts ticks at square intervals
     ax.xaxis.set_major_locator(loc)
     ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.2, linestyle='-')
     ax.grid(which='minor', alpha=0.2, linestyle=':', linewidth='0.5', color='black')
@@ -398,7 +440,7 @@ def draw_res_central_pos(SimAnode, pad, ax):
     ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
     ax.tick_params(which='both', width=3)
     ax.tick_params(which='major', length=5, color='b')
-    loc = plticker.MultipleLocator(base = float(dictInput['length'])) # this locator puts ticks at regular intervals
+    loc = plticker.MultipleLocator(base = float(dictInput['length'])) # this locator puts ticks at square intervals
     ax.xaxis.set_major_locator(loc)
     ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.2, linestyle='-')
     ax.grid(which='minor', alpha=0.2, linestyle=':', linewidth='0.5', color='black')
@@ -438,6 +480,16 @@ def draw():
     #draw_res_pos(sim, pad,axes[2,0])
     #draw_res_central_pos(sim, pad, axes[2,1])
     #save_sd(sim, pad, 0,"lastrun")
+def draw_step():
+    pads, sims = make_step()
+    plt.rcParams.update({'font.size': 12})
+    fig1, ax1 = plt.subplots(figsize=(6, 6))
+    id = plotID()+'_'+dictInput['length_incr']+'mm_'+dictInput['num_sim']+'steps'
+    save_sd(sims, pads, ax1, id)
+    
+    save_plot(fig1, id+"_sd_dist")
+   
+    
 def save_plot(fig, name):
     manager = plt.get_current_fig_manager()
     manager.resize(*manager.window.maxsize())
@@ -456,11 +508,10 @@ if __name__ == "__main__":
     if dictInput['compare']=='yes':
         #draw_multiple(float(dictInput['step']))
         plt.show()
-    elif dictInput['save_sims']:
-        makeStep(dictInput['save_sims'])
+    elif dictInput['save_sims']=='yes':
+        draw_step()
     elif dictInput['lookup_table']:
         construct_table(dictInput['lookup_table'])
     else:
         draw()
-
-        plt.show()
+    plt.show()
