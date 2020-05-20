@@ -61,7 +61,7 @@ def make_step():
         print("wrong input pad shape")
         sys.exit(1)
     pads.get_pad_5x5()
-    sims = Parallel(n_jobs = 2, verbose = 10)(delayed(sim_job)(i, pads, int(dictInput['laser_positions']), float(dictInput['radius']), float(dictInput['length']), float(dictInput['length_incr'])) for i in range(0,int(dictInput['num_sim'])))
+    sims = Parallel(n_jobs = int(dictInput['processes']), verbose = 10)(delayed(sim_job)(i, pads, int(dictInput['laser_positions']), float(dictInput['radius']), float(dictInput['length']), float(dictInput['length_incr'])) for i in range(0,int(dictInput['num_sim'])))
     return pads, sims
 
 def sim_job(i, pads, n, r, l,dl):

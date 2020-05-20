@@ -19,7 +19,7 @@ trapezoid_height:0.10
 pattern_height:0.10
 
 radius:3
-
+processes:2
 laser_positions:50
 compare:no
 step:0.2
