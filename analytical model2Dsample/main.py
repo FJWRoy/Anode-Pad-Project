@@ -505,8 +505,6 @@ def draw_step():
    
     
 def save_plot(fig, name):
-    manager = plt.get_current_fig_manager()
-    manager.resize(*manager.window.maxsize())
     fig.savefig(name+'.jpg', bbox_inches='tight', dpi=200)
 
 
