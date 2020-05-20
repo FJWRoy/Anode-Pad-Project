@@ -293,6 +293,8 @@ def save_sd(sims, pad, ax, filename):
     min_res_list = list()
     max_res_list = list()
     q3_res_list = list()
+    u10_res_list = list()
+    l10_res_list = list()
     for i in range(0,int(dictInput['num_sim'])):
         sim = sims[i]
         rx = [x for x in range(0, len(sim.coord_x)) if (-1.5*pad.side<sim.coord_x[x] and sim.coord_x[x]<1.5*pad.side)]#We are only plotting for the area of interest.
@@ -301,41 +303,52 @@ def save_sd(sims, pad, ax, filename):
         meaningful_res = [1000*rec.sd(sim.amplitude, (i,j),float(dictInput['radius']), 5*pad.side/float(dictInput['laser_positions'])) for i in rx for j in ry]
         median_res = np.median(meaningful_res)
         median_res_list.append(median_res)
+        """
         min_res = np.min(meaningful_res)
         min_res_list.append(min_res)
         max_res = np.max(meaningful_res)
         max_res_list.append(max_res)
+        
         try:
             q3_res = np.percentile(meaningful_res,75)
         except:
             q3_res = float('inf')
-        q3_res_list.append(q3_res)
+        """
+        try:
+            u10_res = np.percentile(meaningful_res,90)
+        except:
+            u10_res = float('inf')
+        try:
+            l10_res = np.percentile(meaningful_res,10)
+        except:
+            l10_res = float('inf')
+        u10_res_list.append(u10_res)
+        l10_res_list.append(l10_res)
+        #q3_res_list.append(q3_res)
         side = float(dictInput['length'])+i * float(dictInput['length_incr'])
         side0 = float(dictInput['length'])
         L_list.append(side/float(dictInput['radius'])/2)
         file_object.write(str(side/float(dictInput['radius'])))
         file_object.write(',')
-        file_object.write(str(side/side0*min_res))
+        file_object.write(str(side/side0*l10_res))
         file_object.write(',')
         file_object.write(str(side/side0*median_res))
         file_object.write(',')
-        file_object.write(str(side/side0*q3_res))
-        file_object.write(',')
-        file_object.write(str(side/side0*max_res))
+        file_object.write(str(side/side0*u10_res))
         file_object.write('\n')
-    ax.text(1, 0, plotDesc()+'\n'+dictInput['length_incr']+'mm '+dictInput['num_sim']+'increments', verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
+    ax.text(0, 1, plotDesc()+'\n'+dictInput['length_incr']+'mm '+dictInput['num_sim']+'increments', verticalalignment='top', horizontalalignment='left', transform=ax.transAxes,color = 'black')
     ax.set_xlabel('L')
     ax.set_ylabel('standard deviation[μm]')
-    ax.plot(L_list, min_res_list, '-o',markersize = 4, label='minimal spot')
+    ax.plot(L_list, l10_res_list, '-v',markersize = 4, label='10th percentile spot')
     ax.plot(L_list, median_res_list,'-o',markersize = 4, label='median')
-    ax.plot(L_list, q3_res_list,'-o',markersize = 4, label='75% percentile')
+    ax.plot(L_list, u10_res_list,'-+',markersize = 4, label='90th percentile')
     #ax.plot(L_list, max_res_list,'-o',markersize = 4, label='maximal spot')
-    #ax.fill_between(L_list, min_res_list, q3_res_list, color = 'gray')
+    ax.fill_between(L_list, l10_res_list, u10_res_list, color = 'gray')
 
     ax.legend(loc=1, framealpha=0.5, fontsize='medium')
-    maxv = min(np.amax(max_res_list), 2000)
+    maxv = min(np.amax(u10_res_list), 2000)
     ax.set_ylim(top = maxv, bottom=0)
-
+    ax.set_xlim(bottom=0)
 
 def construct_table(filename):
     pads = myPadArray(float(dictInput['length']))
