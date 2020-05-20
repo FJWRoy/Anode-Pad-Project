@@ -4,6 +4,7 @@ from AnodeSimulation.parameter import dictInput, input_check, display
 from Reconstruction.reconstruction import reconstruction
 from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
+from joblib import Parallel, delayed
 import matplotlib.ticker as plticker
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 from tqdm import tqdm
@@ -43,7 +44,6 @@ def make():
     return pads, sim
 #Run simulations with differing pad size
 def make_step():
-    sims = list()
     pads = myPadArray(float(dictInput['length']))
     if dictInput['shape'] == 'sin':
         pads.modify_one_sin_box(0.01, dictInput['pattern_height'])
@@ -61,15 +61,16 @@ def make_step():
         print("wrong input pad shape")
         sys.exit(1)
     pads.get_pad_5x5()
-    for i in range(0,int(dictInput['num_sim'])):
-        
-        sim = sim_anode()
-        sim.get_coord_grid(int(dictInput['laser_positions']),float(dictInput['length']))
-        sim.update_end(pads)
-        sim.run_sim(pads, float(dictInput['radius']) / (1+i * float(dictInput['length_incr'])/float(dictInput['length'])))
-        sims.append(sim)
-    
+    sims = Parallel(n_jobs = 2, verbose = 10)(delayed(sim_job)(i, pads, int(dictInput['laser_positions']), float(dictInput['radius']), float(dictInput['length']), float(dictInput['length_incr'])) for i in range(0,int(dictInput['num_sim'])))
     return pads, sims
+
+def sim_job(i, pads, n, r, l,dl):
+    sim = sim_anode()
+    sim.get_coord_grid(n,l)
+    sim.update_end(pads)
+    sim.run_sim(pads, r / (1+i * dl/l))
+    return sim
+
 def draw_pattern(a, ax):
     array = a.box_array
     l = list()
@@ -338,7 +339,7 @@ def save_sd(sims, pad, ax, filename):
         file_object.write('\n')
     ax.text(0, 1, plotDesc()+'\n'+dictInput['length_incr']+'mm '+dictInput['num_sim']+'increments', verticalalignment='top', horizontalalignment='left', transform=ax.transAxes,color = 'black')
     ax.set_xlabel('L')
-    ax.set_ylabel('standard deviation[μm]')
+    ax.set_ylabel('Resolution[μm]')
     ax.plot(L_list, l10_res_list, '-v',markersize = 4, label='10th percentile spot')
     ax.plot(L_list, median_res_list,'-o',markersize = 4, label='median')
     ax.plot(L_list, u10_res_list,'-+',markersize = 4, label='90th percentile')
@@ -348,7 +349,7 @@ def save_sd(sims, pad, ax, filename):
     ax.legend(loc=1, framealpha=0.5, fontsize='medium')
     maxv = min(np.amax(u10_res_list), 2000)
     ax.set_ylim(top = maxv, bottom=0)
-    ax.set_xlim(bottom=0)
+    ax.set_xlim(left=0)
 
 def construct_table(filename):
     pads = myPadArray(float(dictInput['length']))

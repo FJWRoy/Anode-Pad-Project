@@ -12,7 +12,7 @@
 shape:45wedge
 length:6
 length_incr:0.2
-num_sim:3
+num_sim:4
 nose_start:0.20
 nose_end:0.80
 trapezoid_height:0.10
