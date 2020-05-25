@@ -44,25 +44,25 @@ def make():
     return pads, sim
 #Run simulations with differing pad size
 def make_step():
-    pads = myPadArray(float(dictInput['length']))
+    pad = myPadArray(float(dictInput['length']))
     if dictInput['shape'] == 'sin':
-        pads.modify_one_sin_box(0.01, dictInput['pattern_height'])
+        pad.modify_one_sin_box(0.01, dictInput['pattern_height'])
     elif dictInput['shape'] == 'nose':
-        pads.modify_one_n_box(dictInput['nose_start'], dictInput['nose_end'], dictInput['pattern_height'])
+        pad.modify_one_n_box(dictInput['nose_start'], dictInput['nose_end'], dictInput['pattern_height'])
     elif dictInput['shape'] == 'cross':
-        pads.modify_one_cross_box()
+        pad.modify_one_cross_box()
     elif dictInput['shape'] == '45nose':
-        pads.modify_one_45degree_n_box(dictInput['nose_start'], dictInput['nose_end'], dictInput['pattern_height'], dictInput['trapezoid_height'])
+        pad.modify_one_45degree_n_box(dictInput['nose_start'], dictInput['nose_end'], dictInput['pattern_height'], dictInput['trapezoid_height'])
     elif dictInput['shape'] == '45wedge':
-        pads.modify_one_wedge_n_box(dictInput['nose_start'], dictInput['nose_end'], dictInput['pattern_height'])
+        pad.modify_one_wedge_n_box(dictInput['nose_start'], dictInput['nose_end'], dictInput['pattern_height'])
     elif dictInput['shape'] == 'square':
         pass
     else:
         print("wrong input pad shape")
         sys.exit(1)
-    pads.get_pad_5x5()
-    sims = Parallel(n_jobs = int(dictInput['processes']), verbose = 10)(delayed(sim_job)(i, pads, int(dictInput['laser_positions']), float(dictInput['radius']), float(dictInput['length']), float(dictInput['length_incr'])) for i in range(0,int(dictInput['num_sim'])))
-    return pads, sims
+    pad.get_pad_5x5()
+    sims = Parallel(n_jobs = int(dictInput['processes']), verbose = 10)(delayed(sim_job)(i, pad, int(dictInput['laser_positions']), float(dictInput['radius']), float(dictInput['length']), float(dictInput['length_incr'])) for i in range(0,int(dictInput['num_sim'])))
+    return pad, sims
 
 def sim_job(i, pads, n, r, l,dl):
     sim = sim_anode()
@@ -82,23 +82,6 @@ def draw_pattern(a, ax):
     ax.set_xlim([-1.5*a.side, 1.5*a.side])
     ax.set_ylim([-1.5*a.side, 1.5*a.side])
     ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
-    #ax.title.set_text('pad shape with coord in mm')
-    # ax.get_xaxis().set_tick_params(labelsize=15, length=14, width=2, which='major')
-    # ax.get_xaxis().set_tick_params(labelsize=15,length=7, width=2, which='minor')
-    # ax.get_yaxis().set_tick_params(labelsize=15,length=14, width=2, which='major')
-    # ax.get_yaxis().set_tick_params(labelsize=15,length=7, width=2, which='minor')
-    # majorLocatorY = MultipleLocator(5)
-    # minorLocatorY = MultipleLocator(1)
-    # majorLocatorX = MultipleLocator(.100)
-    # minorLocatorX = MultipleLocator(.010)
-    # ax.get_xaxis().set_major_locator(majorLocatorX)
-    # ax.get_xaxis().set_minor_locator(minorLocatorX)
-    # ax.get_yaxis().set_major_locator(majorLocatorY)
-    # ax.get_yaxis().set_minor_locator(minorLocatorY)
-
-
-
-
     ax.grid(which='both', axis='both')
     ax.minorticks_on()
     ax.tick_params(which='both', width=3)
@@ -108,6 +91,18 @@ def draw_pattern(a, ax):
     ax.yaxis.set_major_locator(loc)
     ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.1, linestyle='-')
     ax.grid(b=True, which='minor', axis='both', color='#000000', alpha=0.1, linestyle='-')
+
+def draw_pattern_embed(pad, ax, x1, y1, x2, y2):
+    axins = ax.inset_axes([x1, y1, x2, y2])
+    l = list()
+    [l.append(i.exterior.xy) for i in pad.box_array]
+    [axins.plot(j,k,'g') for (j,k) in list(l)]
+    axins.set_xlim(-pad.side, pad.side)
+    axins.set_ylim(-pad.side, pad.side)
+    axins.set_xticklabels('')
+    axins.set_yticklabels('')
+    axins.xaxis.set_ticks_position('none') 
+    axins.yaxis.set_ticks_position('none') 
 
 def draw_radius(SimAnode, pad, ax):
     draw_pattern(pad, ax)
@@ -177,7 +172,7 @@ def draw_reconstructed(sim, pad, ax):
 def plotID():
     return dictInput['shape']+'_res_'+dictInput['laser_positions']+'x'+dictInput['laser_positions']+'_L_'+dictInput['length']+'_R_'+dictInput['radius']+'_H_'+dictInput['pattern_height']
 def plotDesc():
-    return dictInput['shape']+' '+dictInput['laser_positions']+'x'+dictInput['laser_positions']+'\nside: '+dictInput['length']+'mm radius: '+dictInput['radius']+'mm\npattern height:'+dictInput['pattern_height']+'mm'
+    return ""#dictInput['shape']+' '+dictInput['laser_positions']+'x'+dictInput['laser_positions']+'\nside: '+dictInput['length']+'mm radius: '+dictInput['radius']+'mm\npattern height:'+dictInput['pattern_height']+'mm'
 #Draw the standard deviation plot from noise data
 def draw_sd_colorplot(sim, pad, ax):
     draw_pattern(pad, ax)
@@ -279,6 +274,7 @@ def draw_sd_pos(sim, pad, y_offset, ax):
         np.save(id+"_sd_xaxis.npy", S)
     ax.plot(sim.coord_x[rx[0]:rx[len(rx)-1]], S[rx[0]:rx[len(rx)-1]],label='standard deviation')
     ax.set_ylim(bottom=0)
+    draw_pattern_embed(pad, ax, 0.8, 0, 0.2, 0.2)
     with open(id+"_sd_xaxis.csv", 'w') as f:
         for i in range(n):
             f.write(str(sim.coord_x[i])+','+str(S[i])+'\n')
@@ -337,7 +333,7 @@ def save_sd(sims, pad, ax, filename):
         file_object.write(',')
         file_object.write(str(side/side0*u10_res))
         file_object.write('\n')
-    ax.text(0, 1, plotDesc()+'\n'+dictInput['length_incr']+'mm '+dictInput['num_sim']+'increments', verticalalignment='top', horizontalalignment='left', transform=ax.transAxes,color = 'black')
+    #ax.text(0, 1, plotDesc()+'\n'+dictInput['length_incr']+'mm '+dictInput['num_sim']+'increments', verticalalignment='top', horizontalalignment='left', transform=ax.transAxes,color = 'black')
     ax.set_xlabel('L')
     ax.set_ylabel('Resolution[μm]')
     ax.plot(L_list, l10_res_list, '-v',markersize = 4, label='10th percentile spot')
@@ -350,6 +346,7 @@ def save_sd(sims, pad, ax, filename):
     maxv = min(np.amax(u10_res_list), 2000)
     ax.set_ylim(top = maxv, bottom=0)
     ax.set_xlim(left=0)
+    draw_pattern_embed(pad, ax, 0, 0.8, 0.2, 0.2)
 
 def construct_table(filename):
     pads = myPadArray(float(dictInput['length']))
@@ -400,6 +397,7 @@ def draw_amp_pos(SimAnode, pad, y_offset, ax):
 
     ax.legend(loc=1, framealpha=0.5, fontsize='medium')
     ax.set_ylim(bottom=0)
+    draw_pattern_embed(pad, ax, 0.8, 0, 0.2, 0.2)
 
 def draw_amp_noise_ratio_pos(SimAnode, pad, y_offset, ax):
     noise_level = 0.011*np.pi*float(dictInput['radius'])**2
@@ -424,6 +422,7 @@ def draw_amp_noise_ratio_pos(SimAnode, pad, y_offset, ax):
     ax.plot(SimAnode.coord_x, (amp_indexed[12]+noise_level)/(amp_indexed[11]+noise_level),label='center pad / center-right pad')
     ax.plot(SimAnode.coord_x, (amp_indexed[12]+noise_level)/(amp_indexed[13]+noise_level),label='center pad / center-left pad')
     ax.legend(loc=1, framealpha=0.5, fontsize='x-small')
+    draw_pattern_embed(pad, ax, 0.8, 0, 0.2, 0.2)
 #Not used
 def draw_res_pos(SimAnode, pad, ax):
     ax.set_xlabel('ring position x[mm]')
@@ -495,11 +494,11 @@ def draw():
     #draw_res_central_pos(sim, pad, axes[2,1])
     #save_sd(sim, pad, 0,"lastrun")
 def draw_step():
-    pads, sims = make_step()
+    pad, sims = make_step()
     plt.rcParams.update({'font.size': 12})
     fig1, ax1 = plt.subplots(figsize=(6, 6))
     id = plotID()+'_'+dictInput['length_incr']+'mm_'+dictInput['num_sim']+'steps'
-    save_sd(sims, pads, ax1, id)
+    save_sd(sims, pad, ax1, id)
     
     save_plot(fig1, id+"_sd_dist")
    
