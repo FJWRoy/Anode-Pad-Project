@@ -74,10 +74,14 @@ def sim_job(i, pads, n, r, l,dl):
     return sim
 
 def draw_pattern(a, ax):
-    array = a.box_array
+    array = list(a.box_array)
+    del array[12]
     l = list()
     [l.append(i.exterior.xy) for i in array]
     [ax.plot(j,k,'g') for (j,k) in list(l)]
+    lc = list()
+    lc.append(a.box_array[12].exterior.xy)
+    [ax.plot(j,k,'r') for (j,k) in list(lc)]
     ax.set_axisbelow(True)
     ax.set_xlabel('x[mm]')
     ax.set_ylabel('y[mm]')
@@ -96,15 +100,19 @@ def draw_pattern(a, ax):
 def draw_pattern_colored(a, ax):
     draw_pattern(a,ax)
     pad_patch = PolygonPatch(a.box_array[12])
+    pad_patch.set_facecolor('r')
     ax.add_patch(pad_patch)
 
 def draw_pattern_embed(pad, ax, x1, y1, x2, y2):
     axins = ax.inset_axes([x1, y1, x2, y2])
+    array = list(pad.box_array)
+    del array[12]
     l = list()
-    [l.append(i.exterior.xy) for i in pad.box_array]
-    pad_patch = PolygonPatch(pad.box_array[12])
-    axins.add_patch(pad_patch)
+    [l.append(i.exterior.xy) for i in array]
     [axins.plot(j,k,'g') for (j,k) in list(l)]
+    lc = list()
+    lc.append(pad.box_array[12].exterior.xy)
+    [axins.plot(j,k,'r') for (j,k) in list(lc)]
     axins.set_xlim(-1.5*pad.side, 1.5*pad.side)
     axins.set_ylim(-1.5*pad.side, 1.5*pad.side)
     axins.set_xticklabels('')
@@ -263,6 +271,8 @@ def draw_sd_pos(sim, pad, y_offset, ax):
     #ax.title.set_text('SD of reconstruction vs ring positions'+' y='+str(y_offset*5*pad.side/n))
     ax.set_xlabel('x[mm]')
     ax.set_xlim([-1.5*pad.side, 1.5*pad.side])
+    ax.axvline(-0.5*pad.side,color='red')
+    ax.axvline(0.5*pad.side,color='red')
     ax.set_ylabel('Position Resolution[μm]')
     ax.tick_params(which='both', width=3)
     ax.tick_params(which='major', length=5, color='b')
@@ -280,7 +290,7 @@ def draw_sd_pos(sim, pad, y_offset, ax):
         S = [1000*rec.sd(sim.amplitude, (i,y_offset + int(n/2)),float(dictInput['radius']), 5*pad.side/float(dictInput['laser_positions'])) for i in range(n)] 
         np.save(id+"_sd_xaxis.npy", S)
     ax.plot(sim.coord_x[rx[0]:rx[len(rx)-1]], S[rx[0]:rx[len(rx)-1]],label='Position Resolution')
-    ax.set_ylim(bottom=0)
+    ax.set_ylim(bottom=0, top = 1000)
     draw_pattern_embed(pad, ax, 0, 0, 0.2, 0.2)
     ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
     with open(id+"_sd_xaxis.csv", 'w') as f:
@@ -343,7 +353,7 @@ def save_sd(sims, pad, ax, filename):
         file_object.write('\n')
     
     ax.set_xlabel('L')
-    ax.set_ylabel('Resolution[μm]')
+    ax.set_ylabel('Position Resolution[μm]')
     ax.plot(L_list, l10_res_list, '-v',markersize = 4, label='10th percentile spot')
     ax.plot(L_list, median_res_list,'-o',markersize = 4, label='median')
     ax.plot(L_list, u10_res_list,'-+',markersize = 4, label='90th percentile')
@@ -386,7 +396,9 @@ def construct_table(filename):
  
 def draw_amp_pos(SimAnode, pad, y_offset, ax):
     noise_level = 0.011*np.pi*float(dictInput['radius'])**2
-    #[ax.axvline(x, linestyle='-', color='darkblue') for x in SimAnode.center_pads]
+    #[ax.axvline(x, linestyle='-', color='red') for x in SimAnode.center_pads]
+    ax.axvline(-0.5*pad.side,color='red')
+    ax.axvline(0.5*pad.side,color='red')
     n = int(dictInput['laser_positions'])
     #ax.title.set_text('amplitude vs ring positions'+' y='+str(y_offset*5*pad.side/n))
     ax.set_xlabel('x[mm]')
@@ -412,7 +424,9 @@ def draw_amp_noise_ratio_pos(SimAnode, pad, y_offset, ax):
     noise_level = 0.011*np.pi*float(dictInput['radius'])**2
     np.seterr(all='print')
     ax.set_yscale('log')
-    #[ax.axvline(x, linestyle='-', color='darkblue') for x in SimAnode.center_pads]
+    #[ax.axvline(x, linestyle='-', color='red') for x in SimAnode.center_pads]
+    ax.axvline(-0.5*pad.side,color='red')
+    ax.axvline(0.5*pad.side,color='red')
     #ax.title.set_text('amplitude+noise ratio vs ring positions'+' y='+str(y_offset*5*pad.side/float(dictInput['laser_positions'])))
     ax.set_xlabel('x[mm]')
     ax.set_xlim([-1.5*pad.side, 1.5*pad.side])
@@ -432,41 +446,6 @@ def draw_amp_noise_ratio_pos(SimAnode, pad, y_offset, ax):
     ax.legend(loc=1, framealpha=0.5, fontsize='x-small')
     draw_pattern_embed(pad, ax, 0, 0, 0.2, 0.2)
     ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
-#Not used
-def draw_res_pos(SimAnode, pad, ax):
-    ax.set_xlabel('ring position x[mm]')
-    ax.set_ylabel('position resolution [mm]')
-    #ax.title.set_text('resolution vs ring positions')
-    ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
-    ax.minorticks_on()
-    ax.tick_params(which='both', width=3)
-    ax.tick_params(which='major', length=5, color='b')
-    loc = plticker.MultipleLocator(base = float(dictInput['length'])) # this locator puts ticks at square intervals
-    ax.xaxis.set_major_locator(loc)
-    ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.2, linestyle='-')
-    ax.grid(which='minor', alpha=0.2, linestyle=':', linewidth='0.5', color='black')
-    [ax.axvline(x, linestyle='-', color='darkblue') for x in SimAnode.center_pads]
-    ax.plot(SimAnode.coord_x, SimAnode.res)
-    ax.set_ylim(bottom=0)
-#Not used
-def draw_res_central_pos(SimAnode, pad, ax):
-    ax.plot(SimAnode.coord_x, SimAnode.res)
-    ax.set_xlim(SimAnode.center_pads[0]-0.5,SimAnode.center_pads[3]+0.5)
-    l = list(zip(SimAnode.coord_x,SimAnode.res))
-    y_max = max([y for (x,y) in l if x >= SimAnode.center_pads[0] and x <= SimAnode.center_pads[3]])
-    ax.set_ylim(0,y_max*1.2)
-    ax.minorticks_on()
-    ax.set_xlabel('ring position x[mm]')
-    ax.set_ylabel('position resolution [mm]')
-    #ax.title.set_text('resolution vs ring positions for central pad')
-    ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
-    ax.tick_params(which='both', width=3)
-    ax.tick_params(which='major', length=5, color='b')
-    loc = plticker.MultipleLocator(base = float(dictInput['length'])) # this locator puts ticks at square intervals
-    ax.xaxis.set_major_locator(loc)
-    ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.2, linestyle='-')
-    ax.grid(which='minor', alpha=0.2, linestyle=':', linewidth='0.5', color='black')
-    [ax.axvline(x, linestyle='-', color='darkblue') for x in SimAnode.center_pads]
 
 def draw():
     pad, sim = make()
@@ -475,7 +454,7 @@ def draw():
     #plt.setp(axes.flat, adjustable='box')
     plt.rcParams.update({'font.size': 12})
     fig1, ax1 = plt.subplots(figsize=(6, 6))
-    draw_pattern_colored(pad, ax1)
+    draw_pattern(pad, ax1)
     id = plotID()
     save_plot(fig1, id+"_pattern")
     fig2, ax2 = plt.subplots(figsize=(6, 6))
