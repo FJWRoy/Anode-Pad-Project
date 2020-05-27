@@ -23,7 +23,7 @@ processes:2
 laser_positions:50
 compare:no
 step:0.2
-save_sims:yes
+save_sims:no
 save:
 read:
 lookup_table:
