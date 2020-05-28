@@ -9,7 +9,7 @@
 #end: specify a ending point of a laser path
 #compare: compare R/L ratios or not. Enter yes if so.
 
-shape:45wedge
+shape:square
 length:6
 length_incr:0.2
 num_sim:4

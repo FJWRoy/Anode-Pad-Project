@@ -4,6 +4,7 @@ import math
 import sys
 import pickle
 from tqdm import tqdm
+from joblib import Parallel, delayed
 from shapely.geometry import LineString, MultiPolygon, MultiPoint, box, Polygon,Point
 
 
@@ -50,9 +51,18 @@ class sim_anode:
         self.lst_coord = list((x,y) for y in self.coord_y for x in self.coord_x)#Define a grid from coord_x and coord_y
         #lst_spot = [Point(x,y).buffer(radius) for (x,y) in self.lst_coord]
         #lst_amp = [[x.intersection(b).area for x in lst_spot] for b in tqdm(myPadArray.box_array, leave=False, desc = 'simulation')]
-        lst_amp = [[Point(x,y).buffer(radius).intersection(b).area for (x,y) in self.lst_coord] for b in tqdm(myPadArray.box_array, leave=False, desc = 'simulation')]
+        lst_amp = [self.sim_job(radius, b) for b in tqdm(myPadArray.box_array, leave=False, desc = 'simulation')]
         #More memory efficient to not use lst_spot. Speed implications?
         return np.array(lst_amp)
+    def run_sim_multithread(self, myPadArray, radius, num_thread):
+        self.amplitude = self.run_sim_table_multithread(myPadArray, radius, num_thread)
+    # saves lookup table of amplitudes.
+    def run_sim_table_multithread(self, myPadArray, radius, num_thread):
+        self.lst_coord = list((x,y) for y in self.coord_y for x in self.coord_x)#Define a grid from coord_x and coord_y
+        lst_amp = Parallel(n_jobs = num_thread, verbose = 10)(delayed(self.sim_job)(radius, b) for b in myPadArray.box_array)
+        return np.array(lst_amp)
+    def sim_job(self, radius, b):
+        return np.array([Point(x,y).buffer(radius).intersection(b).area for (x,y) in self.lst_coord])
     def read_sim(self, filename):
         self.amplitude = np.load(filename)
 

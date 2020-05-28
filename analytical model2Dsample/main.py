@@ -40,7 +40,7 @@ def make():
     if dictInput['read']:
         sim.read_sim(id+"_sim.npy")
     else:
-        sim.run_sim(pads, float(dictInput['radius']))
+        sim.run_sim_multithread(pads, float(dictInput['radius']), int(dictInput['processes']))
         np.save(id+"_sim.npy",sim.amplitude)
     
     return pads, sim
@@ -90,11 +90,14 @@ def draw_pattern(a, ax):
     ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
     ax.grid(which='both', axis='both')
     ax.minorticks_on()
-    ax.tick_params(which='both', width=3)
-    ax.tick_params(which='major', length=5, color='b')
-    loc = plticker.MultipleLocator(base = float(dictInput['length'])) # this locator puts ticks at square intervals
+    ax.tick_params(which='major', length=7, color='b')
+    ax.tick_params(which='minor', length=5, color='k')
+    loc = plticker.MultipleLocator(base = float(dictInput['length'])/2) # this locator puts ticks at square intervals
     ax.xaxis.set_major_locator(loc)
+    ax.xaxis.set_ticks_position('both')
     ax.yaxis.set_major_locator(loc)
+    ax.yaxis.set_ticks_position('both')
+    #ax.tick_params(which='both', width=2, labelleft = 'on', labelright = 'off', labelbottom = 'on', labeltop = 'off')
     ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.1, linestyle='-')
     ax.grid(b=True, which='minor', axis='both', color='#000000', alpha=0.1, linestyle='-')
 def draw_pattern_colored(a, ax):
@@ -130,20 +133,7 @@ def draw_radius(SimAnode, pad, ax):
     ax.plot(SimAnode.middle_point[0]+pad.side*0.5, SimAnode.middle_point[1], c='b', marker='x')
     ax.plot(SimAnode.middle_point[0]-pad.side*0.5, SimAnode.middle_point[1], c='b', marker='x')
     ax.legend(loc=1, framealpha=0.7, fontsize='x-small', handles=legend_lst)
-    ax.set_xlabel('x[mm]')
-    ax.set_ylabel('y[mm]')
-    ax.set_xlim([-1.5*pad.side, 1.5*pad.side])
-    ax.set_ylim([-1.5*pad.side, 1.5*pad.side])
-    #ax.title.set_text('pad shape with coord in mm')
     ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
-    ax.minorticks_on()
-    ax.tick_params(which='both', width=3)
-    ax.tick_params(which='major', length=5, color='b')
-    loc = plticker.MultipleLocator(base = float(dictInput['length'])) # this locator puts ticks at square intervals
-    ax.xaxis.set_major_locator(loc)
-    ax.yaxis.set_major_locator(loc)
-    ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.1, linestyle='-')
-    ax.grid(b=True, which='minor', axis='both', color='#000000', alpha=0.1, linestyle='-')
 
 def draw_reconstructed(sim, pad, ax):
     draw_pattern(pad, ax)
@@ -170,20 +160,7 @@ def draw_reconstructed(sim, pad, ax):
     ax.scatter(p_x, p_y, s=10,c='crimson', label='reconstructed ring position')
     ax.scatter(np.array(sim.lst_coord)[:,0], np.array(sim.lst_coord)[:,1], c='blue', marker="_",label='actual ring position')
     ax.legend(loc=1, framealpha=0.7, fontsize='x-small')
-    ax.set_xlabel('x[mm]')
-    ax.set_ylabel('y[mm]')
-    ax.set_xlim([-1.5*pad.side, 1.5*pad.side])
-    ax.set_ylim([-1.5*pad.side, 1.5*pad.side])
-    #ax.title.set_text('pad shape with coord in mm')
     ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
-    ax.minorticks_on()
-    ax.tick_params(which='both', width=3)
-    ax.tick_params(which='major', length=5, color='b')
-    loc = plticker.MultipleLocator(base = float(dictInput['length'])) # this locator puts ticks at square intervals
-    ax.xaxis.set_major_locator(loc)
-    ax.yaxis.set_major_locator(loc)
-    ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.1, linestyle='-')
-    ax.grid(b=True, which='minor', axis='both', color='#000000', alpha=0.1, linestyle='-')
     
 def plotID():
     return dictInput['shape']+'_res_'+dictInput['laser_positions']+'x'+dictInput['laser_positions']+'_L_'+dictInput['length']+'_R_'+dictInput['radius']+'_H_'+dictInput['pattern_height']
@@ -213,20 +190,7 @@ def draw_sd_colorplot(sim, pad, ax):
     pc = ax.pcolor(X,Y, S, vmax = maxv)
     cbar = plt.colorbar(pc, ax = ax)
     cbar.set_label('Position Resolution[μm]', rotation=90)
-    ax.set_xlabel('x[mm]')
-    ax.set_ylabel('y[mm]')
-    ax.set_xlim([-1.5*pad.side, 1.5*pad.side])
-    ax.set_ylim([-1.5*pad.side, 1.5*pad.side])
-    #ax.title.set_text('Standard Deviation of Reconstruction[mm]')
     ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'white')
-    ax.minorticks_on()
-    ax.tick_params(which='both', width=3)
-    ax.tick_params(which='major', length=5, color='b')
-    loc = plticker.MultipleLocator(base = float(dictInput['length'])) # this locator puts ticks at square intervals
-    ax.xaxis.set_major_locator(loc)
-    ax.yaxis.set_major_locator(loc)
-    ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.1, linestyle='-')
-    ax.grid(b=True, which='minor', axis='both', color='#000000', alpha=0.1, linestyle='-')
 def draw_sd_colorplot_debug(sim, pad, ax):
     draw_pattern(pad, ax)
     rx = [x for x in range(0, len(sim.coord_x)) if (-1.5*pad.side<=sim.coord_x[x] and sim.coord_x[x]<=1.5*pad.side)]#We are only plotting for the area of interest.
@@ -252,27 +216,15 @@ def draw_sd_colorplot_debug(sim, pad, ax):
     pc = ax.pcolor(X,Y, S, vmax = maxv)
     cbar = plt.colorbar(pc, ax = ax)
     cbar.set_label('Position Resolution[μm]', rotation=90)
-    ax.set_xlabel('x[mm]')
-    ax.set_ylabel('y[mm]')
-    ax.set_xlim([-1.5*pad.side, 1.5*pad.side])
-    ax.set_ylim([-1.5*pad.side, 1.5*pad.side])
-    #ax.title.set_text('Standard Deviation of Reconstruction[mm]')
     ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'white')
-    ax.minorticks_on()
-    ax.tick_params(which='both', width=3)
-    ax.tick_params(which='major', length=5, color='b')
-    loc = plticker.MultipleLocator(base = float(dictInput['length'])) # this locator puts ticks at square intervals
-    ax.xaxis.set_major_locator(loc)
-    ax.yaxis.set_major_locator(loc)
-    ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.1, linestyle='-')
-    ax.grid(b=True, which='minor', axis='both', color='#000000', alpha=0.1, linestyle='-')    
 def draw_sd_pos(sim, pad, y_offset, ax):
     n = int(dictInput['laser_positions'])
     #ax.title.set_text('SD of reconstruction vs ring positions'+' y='+str(y_offset*5*pad.side/n))
     ax.set_xlabel('x[mm]')
     ax.set_xlim([-1.5*pad.side, 1.5*pad.side])
-    ax.axvline(-0.5*pad.side,color='red')
-    ax.axvline(0.5*pad.side,color='red')
+    if dictInput['shape'] == 'square':
+        ax.axvline(-0.5*pad.side,color='red')
+        ax.axvline(0.5*pad.side,color='red')
     ax.set_ylabel('Position Resolution[μm]')
     ax.tick_params(which='both', width=3)
     ax.tick_params(which='major', length=5, color='b')
@@ -310,55 +262,63 @@ def save_sd(sims, pad, ax, filename):
     q3_res_list = list()
     u10_res_list = list()
     l10_res_list = list()
-    for i in range(0,int(dictInput['num_sim'])):
-        sim = sims[i]
-        rx = [x for x in range(0, len(sim.coord_x)) if (-1.5*pad.side<sim.coord_x[x] and sim.coord_x[x]<1.5*pad.side)]#We are only plotting for the area of interest.
-        ry = [y for y in range(0, len(sim.coord_y)) if (-1.5*pad.side<sim.coord_y[y] and sim.coord_y[y]<1.5*pad.side)]
-        rec = reconstruction()
-        meaningful_res = [1000*rec.sd(sim.amplitude, (i,j),float(dictInput['radius']), 5*pad.side/float(dictInput['laser_positions'])) for i in rx for j in ry]
-        median_res = np.median(meaningful_res)
-        median_res_list.append(median_res)
-        """
-        min_res = np.min(meaningful_res)
-        min_res_list.append(min_res)
-        max_res = np.max(meaningful_res)
-        max_res_list.append(max_res)
-        
-        try:
-            q3_res = np.percentile(meaningful_res,75)
-        except:
-            q3_res = float('inf')
-        """
-        try:
-            u10_res = np.percentile(meaningful_res,90)
-        except:
-            u10_res = float('inf')
-        try:
-            l10_res = np.percentile(meaningful_res,10)
-        except:
-            l10_res = float('inf')
-        u10_res_list.append(u10_res)
-        l10_res_list.append(l10_res)
-        #q3_res_list.append(q3_res)
-        side = float(dictInput['length'])+i * float(dictInput['length_incr'])
-        side0 = float(dictInput['length'])
-        L_list.append(side/float(dictInput['radius'])/2)
-        file_object.write(str(side/float(dictInput['radius'])))
-        file_object.write(',')
-        file_object.write(str(side/side0*l10_res))
-        file_object.write(',')
-        file_object.write(str(side/side0*median_res))
-        file_object.write(',')
-        file_object.write(str(side/side0*u10_res))
-        file_object.write('\n')
-    
+    if dictInput['read']:
+        u10_res_list = np.load(filename+"_u10.npy")
+        l10_res_list = np.load(filename+"_l10.npy")
+        median_res_list = np.load(filename+"_median.npy")
+    else:
+        for i in range(0,int(dictInput['num_sim'])):
+            sim = sims[i]
+            rx = [x for x in range(0, len(sim.coord_x)) if (-1.5*pad.side<sim.coord_x[x] and sim.coord_x[x]<1.5*pad.side)]#We are only plotting for the area of interest.
+            ry = [y for y in range(0, len(sim.coord_y)) if (-1.5*pad.side<sim.coord_y[y] and sim.coord_y[y]<1.5*pad.side)]
+            rec = reconstruction()
+            meaningful_res = [1000*rec.sd(sim.amplitude, (i,j),float(dictInput['radius']), 5*pad.side/float(dictInput['laser_positions'])) for i in rx for j in ry]
+            median_res = np.median(meaningful_res)
+            median_res_list.append(median_res)
+            """
+            min_res = np.min(meaningful_res)
+            min_res_list.append(min_res)
+            max_res = np.max(meaningful_res)
+            max_res_list.append(max_res)
+            
+            try:
+                q3_res = np.percentile(meaningful_res,75)
+            except:
+                q3_res = float('inf')
+            """
+            try:
+                u10_res = np.percentile(meaningful_res,90)
+            except:
+                u10_res = float('inf')
+            try:
+                l10_res = np.percentile(meaningful_res,10)
+            except:
+                l10_res = float('inf')
+            u10_res_list.append(u10_res)
+            l10_res_list.append(l10_res)
+            #q3_res_list.append(q3_res)
+            side = float(dictInput['length'])+i * float(dictInput['length_incr'])
+            side0 = float(dictInput['length'])
+            L_list.append(side/float(dictInput['radius'])/2)
+            file_object.write(str(side/float(dictInput['radius'])))
+            file_object.write(',')
+            file_object.write(str(side/side0*l10_res))
+            file_object.write(',')
+            file_object.write(str(side/side0*median_res))
+            file_object.write(',')
+            file_object.write(str(side/side0*u10_res))
+            file_object.write('\n')
+            ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.2, linestyle='-')
+        np.save(filename+"_u10.npy", u10_res_list)
+        np.save(filename+"_l10.npy", l10_res_list)
+        np.save(filename+"_median.npy", median_res_list)
     ax.set_xlabel('L')
     ax.set_ylabel('Position Resolution[μm]')
     ax.plot(L_list, l10_res_list, '-v',markersize = 4, label='10th percentile spot')
     ax.plot(L_list, median_res_list,'-o',markersize = 4, label='median')
     ax.plot(L_list, u10_res_list,'-+',markersize = 4, label='90th percentile')
     #ax.plot(L_list, max_res_list,'-o',markersize = 4, label='maximal spot')
-    ax.fill_between(L_list, l10_res_list, u10_res_list, color = 'gray')
+    #ax.fill_between(L_list, l10_res_list, u10_res_list, color = 'gray')
 
     ax.legend(loc=1, framealpha=0.5, fontsize='medium')
     maxv = 1000#min(np.amax(u10_res_list), 1000)
@@ -397,8 +357,9 @@ def construct_table(filename):
 def draw_amp_pos(SimAnode, pad, y_offset, ax):
     noise_level = 0.011*np.pi*float(dictInput['radius'])**2
     #[ax.axvline(x, linestyle='-', color='red') for x in SimAnode.center_pads]
-    ax.axvline(-0.5*pad.side,color='red')
-    ax.axvline(0.5*pad.side,color='red')
+    if dictInput['shape'] == 'square':
+        ax.axvline(-0.5*pad.side,color='red')
+        ax.axvline(0.5*pad.side,color='red')
     n = int(dictInput['laser_positions'])
     #ax.title.set_text('amplitude vs ring positions'+' y='+str(y_offset*5*pad.side/n))
     ax.set_xlabel('x[mm]')
@@ -425,8 +386,9 @@ def draw_amp_noise_ratio_pos(SimAnode, pad, y_offset, ax):
     np.seterr(all='print')
     ax.set_yscale('log')
     #[ax.axvline(x, linestyle='-', color='red') for x in SimAnode.center_pads]
-    ax.axvline(-0.5*pad.side,color='red')
-    ax.axvline(0.5*pad.side,color='red')
+    if dictInput['shape'] == 'square':
+        ax.axvline(-0.5*pad.side,color='red')
+        ax.axvline(0.5*pad.side,color='red')
     #ax.title.set_text('amplitude+noise ratio vs ring positions'+' y='+str(y_offset*5*pad.side/float(dictInput['laser_positions'])))
     ax.set_xlabel('x[mm]')
     ax.set_xlim([-1.5*pad.side, 1.5*pad.side])
