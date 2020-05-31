@@ -12,11 +12,15 @@
 shape:square
 length:6
 length_incr:0.2
+
 num_sim:4
 nose_start:0.20
+nose_start_incr:0
 nose_end:0.80
+nose_end_incr:0
 trapezoid_height:0.10
 pattern_height:0.10
+pattern_height_incr:0
 
 radius:3
 processes:2

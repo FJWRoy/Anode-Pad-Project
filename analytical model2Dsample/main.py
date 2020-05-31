@@ -16,61 +16,48 @@ import numpy as np
 import sys
 
 def make():
-    pads = myPadArray(float(dictInput['length']))
-    if dictInput['shape'] == 'sin':
-        pads.modify_one_sin_box(0.01, dictInput['pattern_height'])
-    elif dictInput['shape'] == 'nose':
-        pads.modify_one_n_box(dictInput['nose_start'], dictInput['nose_end'], dictInput['pattern_height'])
-    elif dictInput['shape'] == 'cross':
-        pads.modify_one_cross_box()
-    elif dictInput['shape'] == '45nose':
-        pads.modify_one_45degree_n_box(dictInput['nose_start'], dictInput['nose_end'], dictInput['pattern_height'], dictInput['trapezoid_height'])
-    elif dictInput['shape'] == '45wedge':
-        pads.modify_one_wedge_n_box(dictInput['nose_start'], dictInput['nose_end'], dictInput['pattern_height'])
-    elif dictInput['shape'] == 'square':
-        pass
-    else:
-        print("wrong input pad shape")
-        sys.exit(1)
-    pads.get_pad_5x5()
+    pad = create_pad(0)
     sim = sim_anode()
     sim.get_coord_grid(int(dictInput['laser_positions']), float(dictInput['length']))
-    sim.update_end(pads)
+    sim.update_end(pad)
     id = plotID()
     if dictInput['read']:
         sim.read_sim(id+"_sim.npy")
     else:
-        sim.run_sim_multithread(pads, float(dictInput['radius']), int(dictInput['processes']))
+        sim.run_sim_multithread(pad, float(dictInput['radius']), int(dictInput['processes']))
         np.save(id+"_sim.npy",sim.amplitude)
     
-    return pads, sim
-#Run simulations with differing pad size
-def make_step():
-    pad = myPadArray(float(dictInput['length']))
+    return pad, sim
+def create_pad(i):
+    pad = myPadArray(float(dictInput['length'])+i*float(dictInput['length_incr']))
     if dictInput['shape'] == 'sin':
-        pad.modify_one_sin_box(0.01, dictInput['pattern_height'])
+        pad.modify_one_sin_box(0.01, float(dictInput['pattern_height'])+i*float(dictInput['pattern_height_incr']))
     elif dictInput['shape'] == 'nose':
-        pad.modify_one_n_box(dictInput['nose_start'], dictInput['nose_end'], dictInput['pattern_height'])
+        pad.modify_one_n_box(float(dictInput['nose_start'])+i*float(dictInput['nose_start_incr']), float(dictInput['nose_end'])+i*float(dictInput['nose_end_incr']), float(dictInput['pattern_height'])+i*float(dictInput['pattern_height_incr']))
     elif dictInput['shape'] == 'cross':
         pad.modify_one_cross_box()
     elif dictInput['shape'] == '45nose':
-        pad.modify_one_45degree_n_box(dictInput['nose_start'], dictInput['nose_end'], dictInput['pattern_height'], dictInput['trapezoid_height'])
+        pad.modify_one_45degree_n_box(float(dictInput['nose_start'])+i*float(dictInput['nose_start_incr']), float(dictInput['nose_end'])+i*float(dictInput['nose_end_incr']), float(dictInput['pattern_height'])+i*float(dictInput['pattern_height_incr']), dictInput['trapezoid_height'])
     elif dictInput['shape'] == '45wedge':
-        pad.modify_one_wedge_n_box(dictInput['nose_start'], dictInput['nose_end'], dictInput['pattern_height'])
+        pad.modify_one_wedge_n_box(float(dictInput['nose_start'])+i*float(dictInput['nose_start_incr']), float(dictInput['nose_end'])+i*float(dictInput['nose_end_incr']), float(dictInput['pattern_height'])+i*float(dictInput['pattern_height_incr']))
     elif dictInput['shape'] == 'square':
         pass
     else:
         print("wrong input pad shape")
         sys.exit(1)
     pad.get_pad_5x5()
-    sims = Parallel(n_jobs = int(dictInput['processes']), verbose = 10)(delayed(sim_job)(i, pad, int(dictInput['laser_positions']), float(dictInput['radius']), float(dictInput['length']), float(dictInput['length_incr'])) for i in range(0,int(dictInput['num_sim'])))
-    return pad, sims
-
-def sim_job(i, pads, n, r, l,dl):
+    return pad
+#Run simulations with differing pad size
+def make_step():
+    sample_pad = create_pad(0)
+    sims = Parallel(n_jobs = int(dictInput['processes']), verbose = 10)(delayed(sim_job)(i) for i in range(0,int(dictInput['num_sim'])))
+    return sample_pad, sims
+def sim_job(i):
+    pad = create_pad(i)
     sim = sim_anode()
-    sim.get_coord_grid(n,l)
-    sim.update_end(pads)
-    sim.run_sim(pads, r / (1+i * dl/l))
+    sim.get_coord_grid(dictInput['laser_positions'],float(dictInput['length']))
+    sim.update_end(pad)
+    sim.run_sim(pad, float(dictInput['radius']))
     return sim
 
 def draw_pattern(a, ax):
