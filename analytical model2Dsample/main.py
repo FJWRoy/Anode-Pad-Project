@@ -55,7 +55,7 @@ def make_step():
 def sim_job(i):
     pad = create_pad(i)
     sim = sim_anode()
-    sim.get_coord_grid(dictInput['laser_positions'],float(dictInput['length']))
+    sim.get_coord_grid(int(dictInput['laser_positions']),float(dictInput['length']))
     sim.update_end(pad)
     sim.run_sim(pad, float(dictInput['radius']))
     return sim
@@ -243,6 +243,7 @@ def draw_sd_pos(sim, pad, y_offset, ax):
 def save_sd(sims, pad, ax, filename):
     file_object = open(filename+'.csv', 'w')
     L_list = list()
+    W_list = list()
     median_res_list = list()
     min_res_list = list()
     max_res_list = list()
@@ -286,8 +287,12 @@ def save_sd(sims, pad, ax, filename):
             #q3_res_list.append(q3_res)
             side = float(dictInput['length'])+i * float(dictInput['length_incr'])
             side0 = float(dictInput['length'])
+            width = float(dictInput['nose_end']) - float(dictInput['nose_start']) + i * (float(dictInput['nose_end_incr']) - float(dictInput['nose_start_incr']))
             L_list.append(side/float(dictInput['radius'])/2)
+            W_list.append(width)
             file_object.write(str(side/float(dictInput['radius'])))
+            file_object.write(',')
+            file_object.write(str(width))
             file_object.write(',')
             file_object.write(str(side/side0*l10_res))
             file_object.write(',')
@@ -299,20 +304,32 @@ def save_sd(sims, pad, ax, filename):
         np.save(filename+"_u10.npy", u10_res_list)
         np.save(filename+"_l10.npy", l10_res_list)
         np.save(filename+"_median.npy", median_res_list)
-    ax.set_xlabel('L')
+    
     ax.set_ylabel('Position Resolution[μm]')
-    ax.plot(L_list, l10_res_list, '-v',markersize = 4, label='10th percentile spot')
-    ax.plot(L_list, median_res_list,'-o',markersize = 4, label='median')
-    ax.plot(L_list, u10_res_list,'-+',markersize = 4, label='90th percentile')
+    if float(dictInput['length_incr'])!= 0:
+        ax.set_xlabel('L')
+        
+        ax.set_xlim(left=0, right = max(L_list)+0.1)
+        ax.text(1, 0, dictInput['length_incr']+'mm '+dictInput['num_sim']+'increments', verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
+        ax.plot(L_list, l10_res_list, '-v',markersize = 4, label='10th percentile spot')
+        ax.plot(L_list, median_res_list,'-o',markersize = 4, label='median')
+        ax.plot(L_list, u10_res_list,'-+',markersize = 4, label='90th percentile')
+    elif float(dictInput['nose_start_incr'])!= 0:
+        ax.set_xlabel('W')
+        ax.set_xlim(left=0, right = 1)
+        ax.text(1, 0, str(float(dictInput['nose_start_incr'])-float(dictInput['nose_end_incr']))+'mm '+dictInput['num_sim']+'increments', verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
+        ax.plot(W_list, l10_res_list, '-v',markersize = 4, label='10th percentile')
+        ax.plot(W_list, median_res_list,'-o',markersize = 4, label='median')
+        ax.plot(W_list, u10_res_list,'-+',markersize = 4, label='90th percentile')
     #ax.plot(L_list, max_res_list,'-o',markersize = 4, label='maximal spot')
     #ax.fill_between(L_list, l10_res_list, u10_res_list, color = 'gray')
 
     ax.legend(loc=1, framealpha=0.5, fontsize='medium')
     maxv = 1000#min(np.amax(u10_res_list), 1000)
     ax.set_ylim(top = maxv, bottom=0)
-    ax.set_xlim(left=0)
+    
     draw_pattern_embed(pad, ax, 0, 0.8, 0.2, 0.2)
-    ax.text(1, 0, dictInput['length_incr']+'mm '+dictInput['num_sim']+'increments', verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
+    
 
 def construct_table(filename):
     pads = myPadArray(float(dictInput['length']))
