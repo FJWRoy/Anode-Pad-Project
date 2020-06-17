@@ -164,6 +164,15 @@ class myPadArray:
         list_poly = list([Polygon(x) for x in l_ext])
         self.box_array = list_poly
 
+    def get_pad_coded(self, i):
+        s = self.side
+        b = self.box
+        lists = np.array(list(b.exterior.coords)).tolist()
+        off_set = np.array([[s*x,s*y] for x in range(4*i) for y in range(4*i)])
+        l_ext = [(x+lists).tolist() for x in off_set]
+        list_poly = list([Polygon(x) for x in l_ext])
+        self.box_array = list_poly
+
 
 if __name__ == "__main__":
     print("error: myPadArray is running as main")

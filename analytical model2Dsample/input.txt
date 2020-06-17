@@ -9,24 +9,25 @@
 #end: specify a ending point of a laser path
 #compare: compare R/L ratios or not. Enter yes if so.
 
-shape:45wedge
-length:6
-length_incr:1
+shape:multilayer
+length:5.5
+length_incr:0
 
-num_sim:5
-nose_start:0.05
+num_sim:1
+nose_start:0
 nose_start_incr:0
-nose_end:0.95
+nose_end:0
 nose_end_incr:0
 trapezoid_height:0
-pattern_height:0
+pattern_height:0.5
 pattern_height_incr:0
 
 radius:3
 processes:2
-laser_positions:50
+laser_positions:160
 compare:no
-save_sims:yes
+save_sims:no
 save:
 read:
-lookup_table:
+lookup_table:yes
+layers:2

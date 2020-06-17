@@ -7,54 +7,18 @@ class reconstruction:
         self.log = ""
         np.seterr(all='raise')
     
-    #This reconstruction is for 3x3 pads. 
+    #This reconstruction is for n x n pads, with the sampling points (kn+1) x (kn+1).
     def reconstruction(self, event, lookup_table):
         event = np.array(event)
         lookup_table = np.array(lookup_table)
         # Find maximal amplitude pad from the input. 
-        main_pad = np.argmax(event)#Note that the index starts from 0.
+        table_size = np.size(lookup_table[0])
+        n = int(np.sqrt(table_size))
+        ind = np.argpartition(event, -4)[-4:]
+        #We start from the point where two largest-signal pads have lar
+        main_pad_center_point = min(range(table_size), key=lambda i: ((event[ind[0]] - lookup_table[ind[0]][i]) ** 2 + (event[ind[1]] - lookup_table[ind[1]][i]) ** 2 + (event[ind[2]] - lookup_table[ind[2]][i]) ** 2 + (event[ind[3]] - lookup_table[ind[3]][i]) ** 2))
+        return (main_pad_center_point % n, main_pad_center_point // n)
 
-        # Move to the sampling point corresponding to the center of that pad. We assume that the pad has the largest amplitude at that sampling point.
-        main_pad_center_point = np.argmax(lookup_table[main_pad])
-
-        # variance = [square sum of amplitude difference over all pads]
-        var = np.linalg.norm(event - lookup_table[:,main_pad_center_point])
-
-        # To find "adjacent" points, we need to know the topology of the sampling points of the lookup table. Here we assume that its 100*100 grid.
-        n = int(np.sqrt(np.size(lookup_table, 1)))
-        center_point_x = main_pad_center_point % n
-        center_point_y = main_pad_center_point // n
-
-        #Repeat until we reach a local minimum.
-        current = (center_point_x,center_point_y)
-        search_range = n/2
-        stride = int(n/20)
-        
-        #We are using stride points for optimization.
-        stride_points = [(x,y) for x in range(center_point_x-search_range,center_point_x+search_range+1, stride) for y in range(center_point_y-search_range, center_point_y+search_range+1, stride)]
-        for p in stride_points:
-            # Check if out of bounds:
-            if(p[0]<0 or p[0]>= n or p[1]<0 or p[1]>= n):
-                continue
-            tmp = np.linalg.norm(event - lookup_table[:,p[0]+n*p[1]])#Chi square minimization
-            if(var>tmp):
-                var = tmp
-                current = p
-        #We are happy with this result for now.
-        
-        adjacent_points = [(x,y) for x in range(current[0]-stride,current[0]+stride+1) for y in range(current[1]-stride, current[1]+stride+1)]
-        
-        for p in adjacent_points:
-            # Check if out of bounds:
-            if(p[0]<0 or p[0]>= n or p[1]<0 or p[1]>= n):
-                continue
-            tmp = np.linalg.norm(event - lookup_table[:,p[0]+n*p[1]])#Chi square minimization
-            if(var>tmp):
-                var = tmp
-                current = p
-        #We are happy with this result for now.
-        
-        return current
     #lookup_table = [pad_num] x [sampling points]
     def variance(self, lookup_table, point, radius, scale):
         #We want to calculate deviation of position, using partial derivative of ith pad signal dPi/dx and dPi/dy.
@@ -103,7 +67,7 @@ class reconstruction:
     def degeneracy_check(self, recon_positions):
         log = ""
         #Set the rectangle of interest. We will only check degeneracies in this rectangle.
-        n = np.sqrt(np.size(recon_positions, 0))
+        n = int(np.sqrt(np.size(recon_positions, 0)))
         xmin = int(n/5)
         xmax = int(n/5*4)#exclusive
         ymin = xmin

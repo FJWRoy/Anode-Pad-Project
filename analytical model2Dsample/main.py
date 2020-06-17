@@ -18,18 +18,27 @@ import sys
 def make():
     pad = create_pad(0)
     sim = sim_anode()
-    sim.get_coord_grid(int(dictInput['laser_positions']), float(dictInput['length']))
-    sim.update_end(pad)
     id = plotID()
     if dictInput['read']:
         sim.read_sim(id+"_sim.npy")
     else:
-        sim.run_sim_multithread(pad, float(dictInput['radius']), int(dictInput['processes']))
-        np.save(id+"_sim.npy",sim.amplitude)
+        if dictInput['shape'] == 'multilayer':
+            sim.get_coord_grid_multilayer(int(dictInput['laser_positions']), float(dictInput['length']), int(dictInput['layers']))
+            sim.update_end(pad)
+            sim.run_sim_multilayer_multithread(pad, float(dictInput['radius']), int(dictInput['processes']), int(dictInput['layers']))
+            np.save(id+"_sim.npy",sim.amplitude)
+        else:
+            sim.get_coord_grid(int(dictInput['laser_positions']), float(dictInput['length']))
+            sim.update_end(pad)
+            sim.run_sim_multithread(pad, float(dictInput['radius']), int(dictInput['processes']))
+            np.save(id+"_sim.npy",sim.amplitude)
     
     return pad, sim
 def create_pad(i):
     pad = myPadArray(float(dictInput['length'])+i*float(dictInput['length_incr']))
+    if dictInput['shape'] == 'multilayer':
+        pad.get_pad_coded(int(dictInput['layers']))
+        return pad
     if dictInput['shape'] == 'sin':
         pad.modify_one_sin_box(0.01, float(dictInput['pattern_height'])+i*float(dictInput['pattern_height_incr']))
     elif dictInput['shape'] == 'nose':
@@ -122,32 +131,51 @@ def draw_radius(SimAnode, pad, ax):
     ax.legend(loc=1, framealpha=0.7, fontsize='x-small', handles=legend_lst)
     ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
 
-def draw_reconstructed(sim, pad, ax):
-    draw_pattern(pad, ax)
+def draw_reconstructed():
+    pad, sim = make()
+    plt.rcParams.update({'font.size': 12})
+    fig1, ax = plt.subplots(figsize=(6, 6))
+    l = list()
+    [l.append(i.exterior.xy) for i in array]
+    [ax.plot(j,k,'g') for (j,k) in list(l)]
+    lc = list()
+    lc.append(a.box_array[12].exterior.xy)
+    [ax.plot(j,k,'r') for (j,k) in list(lc)]
+    ax.set_axisbelow(True)
+    ax.set_xlabel('x[mm]')
+    ax.set_ylabel('y[mm]')
     recon_positions = list()
     p_x = list()
     p_y = list()
     id = plotID()
+    n = int(dictInput['laser_positions'])
     if dictInput['read']:
         recon_positions = np.load(id+"_reconstruction.npy")
-        p_x = [(recon_positions[i][0]/float(dictInput['laser_positions'])-0.5)*float(dictInput['length'])*5 for i in range(len(recon_positions))]
-        p_y = [(recon_positions[i][1]/float(dictInput['laser_positions'])-0.5)*float(dictInput['length'])*5 for i in range(len(recon_positions))]
     else:
         rec = reconstruction()
-        recon_positions = [rec.reconstruction(sim.amplitude[:, i],sim.amplitude) for i in tqdm(range(int(dictInput['laser_positions'])**2),leave=False, desc='reconstruction')]
-        p_x = [(recon_positions[i][0]/float(dictInput['laser_positions'])-0.5)*float(dictInput['length'])*5 for i in range(len(recon_positions))]
-        p_y = [(recon_positions[i][1]/float(dictInput['laser_positions'])-0.5)*float(dictInput['length'])*5 for i in range(len(recon_positions))]
-        np.save(id+"_reconstruction.npy",recon_positions)
-        with open(id+"_reconstruction.csv", 'w') as f:
-            for i in range(len(recon_positions)):
-                f.write(str(i)+','+str(p_x[i])+','+str(p_y[i])+'\n')
-        log = rec.degeneracy_check(recon_positions)
-        with open(id+"_reconstruction.log", 'w') as f:
-            f.write(log)
+        recon_positions = [rec.reconstruction(sim.amplitude[:, i],sim.amplitude) for i in tqdm(range(n**2),leave=False, desc='reconstruction')]
+    if dictInput['layers']:
+        paddim = 4*int(dictInput['layers'])
+        p_x = [recon_positions[i][0]/n*paddim*float(dictInput['length']) for i in range(len(recon_positions))]
+        p_y = [recon_positions[i][1]/n*paddim*float(dictInput['length']) for i in range(len(recon_positions))]
+    else:
+        paddim = 5
+        p_x = [(recon_positions[i][0]/n-0.5)*paddim*float(dictInput['length']) for i in range(len(recon_positions))]
+        p_y = [(recon_positions[i][1]/n-0.5)*paddim*float(dictInput['length']) for i in range(len(recon_positions))]
     ax.scatter(p_x, p_y, s=10,c='crimson', label='reconstructed ring position')
-    ax.scatter(np.array(sim.lst_coord)[:,0], np.array(sim.lst_coord)[:,1], c='blue', marker="_",label='actual ring position')
+    X = [i % n for i in range(n**2)]
+    Y = [i // n for i in range(n**2)]
+    ax.scatter(X, Y, c='blue', marker="_",label='actual ring position')
     ax.legend(loc=1, framealpha=0.7, fontsize='x-small')
     ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
+    save_plot(fig1, id+"_reconstruction")
+    np.save(id+"_reconstruction.npy",recon_positions)
+    with open(id+"_reconstruction.csv", 'w') as f:
+        for i in range(len(recon_positions)):
+            f.write(str(i)+','+str(p_x[i])+','+str(p_y[i])+'\n')
+    log = rec.degeneracy_check(recon_positions)
+    with open(id+"_reconstruction.log", 'w') as f:
+        f.write(log)
     
 def plotID():
     return dictInput['shape']+'_res_'+dictInput['laser_positions']+'x'+dictInput['laser_positions']+'_L_'+dictInput['length']+'_R_'+dictInput['radius']+'_H_'+dictInput['pattern_height']
@@ -485,8 +513,8 @@ if __name__ == "__main__":
         plt.show()
     elif dictInput['save_sims']=='yes':
         draw_step()
-    elif dictInput['lookup_table']:
-        construct_table(dictInput['lookup_table'])
+    elif dictInput['lookup_table']=='yes':
+        draw_reconstructed()
     else:
         draw()
     plt.show()

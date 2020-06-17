@@ -32,6 +32,15 @@ class sim_anode:
         self.coord_y =  self.coord_y[:-1]
         self.middle_point = [self.coord_x[math.ceil(len(self.coord_x)/2)],self.coord_y[math.ceil(len(self.coord_y)/2)]]#The center of the grid.
 
+    def get_coord_grid_multilayer(self, n_lasers, pad_size, layer):
+        start = 0
+        end = 4*layer*pad_size
+        self.coord_x = np.linspace(start, end, n_lasers+1)#2 dimentional sampling points form a grid. For sake of symmetry, 1 is added.
+        self.coord_x =  self.coord_x[:-1]
+        self.coord_y = np.linspace(start, end, n_lasers+1)#2 dimentional sampling points form a grid
+        self.coord_y =  self.coord_y[:-1]
+        self.middle_point = [self.coord_x[math.ceil(len(self.coord_x)/2)],self.coord_y[math.ceil(len(self.coord_y)/2)]]#The center of the grid.
+
     def update_end(self,pad):
         """
         lst_pad = [pad.box_array[11],pad.box_array[12],pad.box_array[13]]
@@ -56,6 +65,35 @@ class sim_anode:
         return np.array(lst_amp)
     def run_sim_multithread(self, myPadArray, radius, num_thread):
         self.amplitude = self.run_sim_table_multithread(myPadArray, radius, num_thread)
+    def run_sim_multilayer_multithread(self, myPadArray, radius, num_thread, array_size):
+        table = self.run_sim_table_multithread(myPadArray, radius, num_thread)
+        n = 4*array_size
+        for c in range(8):
+            if(c%4==0):
+                for i in range(2*array_size):
+                    sum = 0
+                    for j in range(array_size):
+                        sum += table[c//4+(c%4)*n+j*n*4 + 2*i + 2*n*(i%2)]
+                    self.amplitude.append(sum)
+            if(c%4==1):
+                for i in range(2*array_size):
+                    sum = 0
+                    for j in range(array_size):
+                        sum += table[c//4+(c%4)*n+j*4 + 2*(i%2) + 2*n*i]
+                    self.amplitude.append(sum)
+            if(c%4==2):
+                for i in range(2*array_size):
+                    sum = 0
+                    for j in range(array_size):
+                        sum += table[c//4+(c%4)*n+j*n*4 + 2*i - 2*n*(i%2)]
+                    self.amplitude.append(sum)
+            if(c%4==3):
+                for i in range(2*array_size):
+                    sum = 0
+                    for j in range(array_size):
+                        sum += table[c//4+(c%4-2)*n+2+j*4 - 2*(i%2) + 2*n*i]
+                    self.amplitude.append(sum)
+        self.amplitude = np.array(self.amplitude)
     # saves lookup table of amplitudes.
     def run_sim_table_multithread(self, myPadArray, radius, num_thread):
         self.lst_coord = list((x,y) for y in self.coord_y for x in self.coord_x)#Define a grid from coord_x and coord_y
