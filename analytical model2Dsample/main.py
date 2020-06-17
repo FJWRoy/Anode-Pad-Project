@@ -135,12 +135,12 @@ def draw_reconstructed():
     pad, sim = make()
     plt.rcParams.update({'font.size': 12})
     fig1, ax = plt.subplots(figsize=(6, 6))
-    array = list(a.box_array)
+    array = list(pad.box_array)
     l = list()
     [l.append(i.exterior.xy) for i in array]
     [ax.plot(j,k,'g') for (j,k) in list(l)]
     lc = list()
-    lc.append(a.box_array[12].exterior.xy)
+    lc.append(pad.box_array[12].exterior.xy)
     [ax.plot(j,k,'r') for (j,k) in list(lc)]
     ax.set_axisbelow(True)
     ax.set_xlabel('x[mm]')
