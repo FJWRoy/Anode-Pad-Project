@@ -53,7 +53,10 @@ class reconstruction:
         try:
             s = s / np.linalg.det(s)
         except:
-            self.log+= 'Degeneracy at ('+str((point[0]-0.5*n)*scale)+','+str((point[1]-0.5*n)*scale)+'):\ndPdx:\n'+np.array_str(np.reshape(dPdx, (5,5)))+'\ndPdy:\n'+np.array_str(np.reshape(dPdy, (5,5)))+'\n'
+            if(np.size(dPdx)==25):
+                self.log+= 'Degeneracy at ('+str((point[0]-0.5*n)*scale)+','+str((point[1]-0.5*n)*scale)+'):\ndPdx:\n'+np.array_str(np.reshape(dPdx, (5,5)))+'\ndPdy:\n'+np.array_str(np.reshape(dPdy, (5,5)))+'\n'
+            else:
+                self.log+= 'Degeneracy at ('+str((point[0])*scale)+','+str((point[1])*scale)+'):\ndPdx:\n'+np.array_str(dPdx)+'\ndPdy:\n'+np.array_str(dPdy)+'\n'
             
         return np.dot(s,  np.transpose(j))
     def clear_log(self):

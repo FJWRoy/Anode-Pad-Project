@@ -139,9 +139,6 @@ def draw_reconstructed():
     l = list()
     [l.append(i.exterior.xy) for i in array]
     [ax.plot(j,k,'g') for (j,k) in list(l)]
-    lc = list()
-    lc.append(pad.box_array[12].exterior.xy)
-    [ax.plot(j,k,'r') for (j,k) in list(lc)]
     ax.set_axisbelow(True)
     ax.set_xlabel('x[mm]')
     ax.set_ylabel('y[mm]')
@@ -157,15 +154,17 @@ def draw_reconstructed():
         recon_positions = [rec.reconstruction(sim.amplitude[:, i],sim.amplitude) for i in tqdm(range(n**2),leave=False, desc='reconstruction')]
     if dictInput['layers']:
         paddim = 4*int(dictInput['layers'])
-        p_x = [recon_positions[i][0]/n*paddim*float(dictInput['length']) for i in range(len(recon_positions))]
-        p_y = [recon_positions[i][1]/n*paddim*float(dictInput['length']) for i in range(len(recon_positions))]
+        p_x = [(recon_positions[i][0]/n*paddim-0.5)*float(dictInput['length']) for i in range(len(recon_positions))]
+        p_y = [(recon_positions[i][1]/n*paddim-0.5)*float(dictInput['length']) for i in range(len(recon_positions))]
+        X = [((i % n)/n*paddim-0.5)*float(dictInput['length']) for i in range(n**2)]
+        Y = [((i // n)/n*paddim-0.5)*float(dictInput['length']) for i in range(n**2)]
     else:
         paddim = 5
         p_x = [(recon_positions[i][0]/n-0.5)*paddim*float(dictInput['length']) for i in range(len(recon_positions))]
         p_y = [(recon_positions[i][1]/n-0.5)*paddim*float(dictInput['length']) for i in range(len(recon_positions))]
+        X = [((i % n)/n-0.5)*paddim*float(dictInput['length']) for i in range(n**2)]
+        Y = [((i // n)/n-0.5)*paddim*float(dictInput['length']) for i in range(n**2)]
     ax.scatter(p_x, p_y, s=10,c='crimson', label='reconstructed ring position')
-    X = [i % n for i in range(n**2)]
-    Y = [i // n for i in range(n**2)]
     ax.scatter(X, Y, c='blue', marker="_",label='actual ring position')
     ax.legend(loc=1, framealpha=0.7, fontsize='x-small')
     ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
@@ -177,6 +176,38 @@ def draw_reconstructed():
     log = rec.degeneracy_check(recon_positions)
     with open(id+"_reconstruction.log", 'w') as f:
         f.write(log)
+
+
+    fig2, ax2= plt.subplots(figsize=(6, 6))
+    array = list(pad.box_array)
+    l = list()
+    [l.append(i.exterior.xy) for i in array]
+    [ax2.plot(j,k,'g') for (j,k) in list(l)]
+
+    rx = [x for x in range(1, len(sim.coord_x)-1)]#We are only plotting for the area of interest.
+    ry = [y for y in range(1, len(sim.coord_y)-1)]
+    X, Y = np.meshgrid([sim.coord_x[i]-0.5*float(dictInput['length']) for i in rx],[sim.coord_y[i]-0.5*float(dictInput['length']) for i in ry])
+    S = list()
+    id = plotID()
+    if dictInput['read']:
+        S = np.load(id+"_sd_colorplot.npy")
+    else:
+        rec = reconstruction()
+        S = [[1000*rec.sd(sim.amplitude, (i,j),float(dictInput['radius']), n*pad.side/float(dictInput['laser_positions'])) for i in rx] for j in tqdm(ry,leave=False,desc = 'SD calculation y' )]
+        np.save(id+"_sd_colorplot.npy",S)
+        with open(id+"_sd_colorplot.csv", 'w') as f:
+            for x in range(len(rx)):
+                for y in range(len(ry)):
+                    f.write(str(x+rx[0])+','+str(y+ry[0])+','+str(S[y][x])+'\n')
+        with open(id+"_sd_colorplot.log", 'w') as f:
+            f.write(rec.print_log())
+    maxv = 1000#min(np.amax(S), 1000)
+    pc = ax2.pcolor(X,Y, S, vmax = maxv)
+    cbar = plt.colorbar(pc, ax = ax2)
+    cbar.set_label('Position Resolution[μm]', rotation=90)
+    ax2.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax2.transAxes,color = 'white')
+    save_plot(fig2, id+"_sd_colorplot")
+
     
 def plotID():
     return dictInput['shape']+'_res_'+dictInput['laser_positions']+'x'+dictInput['laser_positions']+'_L_'+dictInput['length']+'_R_'+dictInput['radius']+'_H_'+dictInput['pattern_height']
