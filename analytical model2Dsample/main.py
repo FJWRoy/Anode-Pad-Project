@@ -193,7 +193,7 @@ def draw_reconstructed():
         S = np.load(id+"_sd_colorplot.npy")
     else:
         rec = reconstruction()
-        S = [[1000*rec.sd(sim.amplitude, (i,j),float(dictInput['radius']), n*pad.side/float(dictInput['laser_positions'])) for i in rx] for j in tqdm(ry,leave=False,desc = 'SD calculation y' )]
+        S = [[1000*rec.sd(sim.amplitude, (i,j),float(dictInput['radius']), 4*int(dictInput['layers'])*pad.side/float(dictInput['laser_positions'])) for i in rx] for j in tqdm(ry,leave=False,desc = 'SD calculation y' )]
         np.save(id+"_sd_colorplot.npy",S)
         with open(id+"_sd_colorplot.csv", 'w') as f:
             for x in range(len(rx)):
