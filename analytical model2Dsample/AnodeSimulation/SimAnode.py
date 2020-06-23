@@ -97,10 +97,27 @@ class sim_anode:
     # saves lookup table of amplitudes.
     def run_sim_table_multithread(self, myPadArray, radius, num_thread):
         self.lst_coord = list((x,y) for y in self.coord_y for x in self.coord_x)#Define a grid from coord_x and coord_y
-        lst_amp = Parallel(n_jobs = num_thread, verbose = 10)(delayed(self.sim_job)(radius, b) for b in myPadArray.box_array)
+        lst_amp = Parallel(n_jobs = num_thread, verbose = 10)(delayed(self.sim_job_gaussian)(30, radius *3 , radius/2, b) for b in myPadArray.box_array)
         return np.array(lst_amp)
     def sim_job(self, radius, b):
         return np.array([Point(x,y).buffer(radius).intersection(b).area for (x,y) in self.lst_coord])
+
+    def sim_job_gaussian(self, partition, cutoff, std, b):
+        return np.array([sum([Point(x,y).buffer(cutoff / partition * (i+1)).intersection(b).area * 1/(2*math.pi*( std ** 2))*(math.exp(-1/2*((cutoff / partition * (i+0.5) / std) ** 2)) - math.exp(-1/2*((cutoff / partition * (i+1.5) / std) ** 2)))  for i in range(partition)]) for (x,y) in self.lst_coord])
+    """
+    def gaussian_integral(self, partition, cutoff, std, radius, b):
+        
+        sum = np.array()
+        for i in range(partition):
+            current_point = cutoff / partition * i / std
+            next_point = cutoff / partition * (i+1) / std
+            disk_thickness = 1/(2* math.pi *( std ** 2))*(math.exp(-1/2*current_point ** 2) - math.exp(-1/2*next_point ** 2))
+            sum += np.array([Point(x,y).buffer(next_point * std).intersection(b).area for (x,y) in self.lst_coord])
+        return sum
+    """
+
+
+
     def read_sim(self, filename):
         self.amplitude = np.load(filename)
 

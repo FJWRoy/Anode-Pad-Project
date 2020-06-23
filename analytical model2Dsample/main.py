@@ -429,7 +429,7 @@ def construct_table(filename):
             pickle.dump(table, f, pickle.HIGHEST_PROTOCOL)
  
 def draw_amp_pos(SimAnode, pad, y_offset, ax):
-    noise_level = 0.011*np.pi*float(dictInput['radius'])**2
+    noise_level = 0.02
     #[ax.axvline(x, linestyle='-', color='red') for x in SimAnode.center_pads]
     if dictInput['shape'] == 'square':
         ax.axvline(-0.5*pad.side,color='red')
@@ -456,7 +456,7 @@ def draw_amp_pos(SimAnode, pad, y_offset, ax):
     ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
 
 def draw_amp_noise_ratio_pos(SimAnode, pad, y_offset, ax):
-    noise_level = 0.011*np.pi*float(dictInput['radius'])**2
+    noise_level = 0.02
     np.seterr(all='print')
     ax.set_yscale('log')
     #[ax.axvline(x, linestyle='-', color='red') for x in SimAnode.center_pads]

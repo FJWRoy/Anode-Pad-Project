@@ -23,7 +23,7 @@ class reconstruction:
     def variance(self, lookup_table, point, radius, scale):
         #We want to calculate deviation of position, using partial derivative of ith pad signal dPi/dx and dPi/dy.
         #The variation of p, calculated from experimental noise data 
-        var_p = (0.015*np.pi*(radius ** 2))**2
+        var_p = (0.02)**2
         #lookup_table = np.array(lookup_table)
         k = self.jacobian_inv(lookup_table, point, scale)
         var_x = var_p * np.linalg.norm(k[0])

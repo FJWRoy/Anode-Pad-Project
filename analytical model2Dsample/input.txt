@@ -9,8 +9,8 @@
 #end: specify a ending point of a laser path
 #compare: compare R/L ratios or not. Enter yes if so.
 
-shape:multilayer
-length:5.5
+shape:square
+length:16.8
 length_incr:0
 
 num_sim:1
@@ -22,12 +22,12 @@ trapezoid_height:0
 pattern_height:0.5
 pattern_height_incr:0
 
-radius:3
+radius:8.4
 processes:2
-laser_positions:160
+laser_positions:100
 compare:no
 save_sims:no
 save:
 read:
-lookup_table:yes
-layers:2
+lookup_table:
+layers:0
