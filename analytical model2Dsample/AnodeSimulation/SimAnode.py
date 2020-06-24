@@ -60,7 +60,7 @@ class sim_anode:
         self.lst_coord = list((x,y) for y in self.coord_y for x in self.coord_x)#Define a grid from coord_x and coord_y
         #lst_spot = [Point(x,y).buffer(radius) for (x,y) in self.lst_coord]
         #lst_amp = [[x.intersection(b).area for x in lst_spot] for b in tqdm(myPadArray.box_array, leave=False, desc = 'simulation')]
-        lst_amp = [self.sim_job(radius, b) for b in tqdm(myPadArray.box_array, leave=False, desc = 'simulation')]
+        lst_amp = [self.sim_job_gaussian(30, radius *3 , radius/2, b) for b in tqdm(myPadArray.box_array, leave=False, desc = 'simulation')]
         #More memory efficient to not use lst_spot. Speed implications?
         return np.array(lst_amp)
     def run_sim_multithread(self, myPadArray, radius, num_thread):

@@ -10,10 +10,10 @@
 #compare: compare R/L ratios or not. Enter yes if so.
 
 shape:square
-length:16.8
-length_incr:0
+length:8.4
+length_incr:4.2
 
-num_sim:1
+num_sim:4
 nose_start:0
 nose_start_incr:0
 nose_end:0
@@ -26,7 +26,7 @@ radius:8.4
 processes:2
 laser_positions:100
 compare:no
-save_sims:no
+step_sim:yes
 save:
 read:
 lookup_table:

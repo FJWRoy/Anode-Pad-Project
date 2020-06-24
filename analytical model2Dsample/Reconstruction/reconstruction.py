@@ -20,7 +20,7 @@ class reconstruction:
         return (main_pad_center_point % n, main_pad_center_point // n)
 
     #lookup_table = [pad_num] x [sampling points]
-    def variance(self, lookup_table, point, radius, scale):
+    def variance(self, lookup_table, point, scale):
         #We want to calculate deviation of position, using partial derivative of ith pad signal dPi/dx and dPi/dy.
         #The variation of p, calculated from experimental noise data 
         var_p = (0.02)**2
@@ -31,11 +31,11 @@ class reconstruction:
         if(var_x <0.001 or np.isnan(var_x)):#If less then 1 micron
             var_x = float('inf')
         if(var_y <0.001 or np.isnan(var_y)):
-            var_x = float('inf')
+            var_y = float('inf')
         return var_x, var_y
     #lookup_table = [pad_num] x [sampling points]
-    def sd(self, lookup_table, point, radius, scale):
-        vx, vy = self.variance(lookup_table, point, radius, scale)
+    def sd(self, lookup_table, point, scale):
+        vx, vy = self.variance(lookup_table, point, scale)
         return np.sqrt(vx+vy)
     #lookup_table = [pad_num] x [sampling points]
     def jacobian(self, lookup_table, point, scale):

@@ -193,7 +193,7 @@ def draw_reconstructed():
         S = np.load(id+"_sd_colorplot.npy")
     else:
         rec = reconstruction()
-        S = [[1000*rec.sd(sim.amplitude, (i,j),float(dictInput['radius']), 4*int(dictInput['layers'])*pad.side/float(dictInput['laser_positions'])) for i in rx] for j in tqdm(ry,leave=False,desc = 'SD calculation y' )]
+        S = [[1000*rec.sd(sim.amplitude, (i,j), 4*int(dictInput['layers'])*pad.side/float(dictInput['laser_positions'])) for i in rx] for j in tqdm(ry,leave=False,desc = 'SD calculation y' )]
         np.save(id+"_sd_colorplot.npy",S)
         with open(id+"_sd_colorplot.csv", 'w') as f:
             for x in range(len(rx)):
@@ -201,7 +201,7 @@ def draw_reconstructed():
                     f.write(str(x+rx[0])+','+str(y+ry[0])+','+str(S[y][x])+'\n')
         with open(id+"_sd_colorplot.log", 'w') as f:
             f.write(rec.print_log())
-    maxv = 1000#min(np.amax(S), 1000)
+    maxv = 500#min(np.amax(S), 1000)
     pc = ax2.pcolor(X,Y, S, vmax = maxv)
     cbar = plt.colorbar(pc, ax = ax2)
     cbar.set_label('Position Resolution[μm]', rotation=90)
@@ -225,7 +225,7 @@ def draw_sd_colorplot(sim, pad, ax):
         S = np.load(id+"_sd_colorplot.npy")
     else:
         rec = reconstruction()
-        S = [[1000*rec.sd(sim.amplitude, (i,j),float(dictInput['radius']), 5*pad.side/float(dictInput['laser_positions'])) for i in rx] for j in tqdm(ry,leave=False,desc = 'SD calculation y' )]
+        S = [[1000*rec.sd(sim.amplitude, (i,j), 5*pad.side/float(dictInput['laser_positions'])) for i in rx] for j in tqdm(ry,leave=False,desc = 'SD calculation y' )]
         np.save(id+"_sd_colorplot.npy",S)
         with open(id+"_sd_colorplot.csv", 'w') as f:
             for x in range(len(rx)):
@@ -233,17 +233,17 @@ def draw_sd_colorplot(sim, pad, ax):
                     f.write(str(x+rx[0])+','+str(y+ry[0])+','+str(S[y][x])+'\n')
         with open(id+"_sd_colorplot.log", 'w') as f:
             f.write(rec.print_log())
-    maxv = 1000#min(np.amax(S), 1000)
+    maxv = 500#min(np.amax(S), 1000)
     pc = ax.pcolor(X,Y, S, vmax = maxv)
     cbar = plt.colorbar(pc, ax = ax)
     cbar.set_label('Position Resolution[μm]', rotation=90)
     ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'white')
 def draw_sd_colorplot_debug(sim, pad, ax):
     draw_pattern(pad, ax)
-    rx = [x for x in range(0, len(sim.coord_x)) if (-1.5*pad.side<=sim.coord_x[x] and sim.coord_x[x]<=1.5*pad.side)]#We are only plotting for the area of interest.
-    ry = [y for y in range(0, len(sim.coord_y)) if (-1.5*pad.side<=sim.coord_y[y] and sim.coord_y[y]<=1.5*pad.side)]
-    mx = [x for x in range(0, len(sim.coord_x)) if (-0.5*pad.side<=sim.coord_x[x] and sim.coord_x[x]<=0.5*pad.side)]#We are only plotting for the area of interest.
-    my = [y for y in range(0, len(sim.coord_y)) if (-0.5*pad.side<=sim.coord_y[y] and sim.coord_y[y]<=0.5*pad.side)]
+    rx = [x for x in range(len(sim.coord_x)) if (-1.5*pad.side<=sim.coord_x[x] and sim.coord_x[x]<=1.5*pad.side)]#We are only plotting for the area of interest.
+    ry = [y for y in range(len(sim.coord_y)) if (-1.5*pad.side<=sim.coord_y[y] and sim.coord_y[y]<=1.5*pad.side)]
+    mx = [x for x in range(len(sim.coord_x)) if (-0.5*pad.side<=sim.coord_x[x] and sim.coord_x[x]<=0.5*pad.side)]#We are only plotting for the area of interest.
+    my = [y for y in range(len(sim.coord_y)) if (-0.5*pad.side<=sim.coord_y[y] and sim.coord_y[y]<=0.5*pad.side)]
     X, Y = np.meshgrid([sim.coord_x[i] for i in rx],[sim.coord_y[i] for i in ry])
     S = list()
     id = plotID()
@@ -259,7 +259,7 @@ def draw_sd_colorplot_debug(sim, pad, ax):
                 ax.plot(sim.coord_x[i], sim.coord_y[j], c='b', marker='x')
                 ax.text(sim.coord_x[i], sim.coord_y[j], str((i - 0.5*len(sim.coord_x))* scale)+','+str((j - 0.5*len(sim.coord_y))* scale))
                 outliers.append((i,j))
-    maxv = 1000
+    maxv = 500
     pc = ax.pcolor(X,Y, S, vmax = maxv)
     cbar = plt.colorbar(pc, ax = ax)
     cbar.set_label('Position Resolution[μm]', rotation=90)
@@ -279,17 +279,17 @@ def draw_sd_pos(sim, pad, y_offset, ax):
     ax.xaxis.set_major_locator(loc)
     ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.2, linestyle='-')
     initpoint = n*int(n/2)
-    rx = [x for x in range(0, len(sim.coord_x)) if (-1.5*pad.side<sim.coord_x[x] and sim.coord_x[x]<1.5*pad.side)]#We are only plotting for the area of interest.
+    rx = [x for x in range(len(sim.coord_x)) if (-1.5*pad.side<=sim.coord_x[x] and sim.coord_x[x]<=1.5*pad.side)]#We are only plotting for the area of interest.
     rec = reconstruction()
     S = list()
     id = plotID()
     if dictInput['read']:
         S = np.load(id+"_sd_xaxis.npy")
     else:
-        S = [1000*rec.sd(sim.amplitude, (i,y_offset + int(n/2)),float(dictInput['radius']), 5*pad.side/float(dictInput['laser_positions'])) for i in range(n)] 
+        S = [1000*rec.sd(sim.amplitude, (i,y_offset + int(n/2)), 5*pad.side/float(dictInput['laser_positions'])) for i in range(n)] 
         np.save(id+"_sd_xaxis.npy", S)
     ax.plot(sim.coord_x[rx[0]:rx[len(rx)-1]], S[rx[0]:rx[len(rx)-1]],label='Position Resolution')
-    ax.set_ylim(bottom=0, top = 1000)
+    ax.set_ylim(bottom=0, top = 500)
     draw_pattern_embed(pad, ax, 0, 0, 0.2, 0.2)
     ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
     with open(id+"_sd_xaxis.csv", 'w') as f:
@@ -321,7 +321,8 @@ def save_sd(sims, pad, ax, filename):
             rx = [x for x in range(0, len(sim.coord_x)) if (-1.5*pad.side<sim.coord_x[x] and sim.coord_x[x]<1.5*pad.side)]#We are only plotting for the area of interest.
             ry = [y for y in range(0, len(sim.coord_y)) if (-1.5*pad.side<sim.coord_y[y] and sim.coord_y[y]<1.5*pad.side)]
             rec = reconstruction()
-            meaningful_res = [1000*rec.sd(sim.amplitude, (i,j),float(dictInput['radius']), 5*pad.side/float(dictInput['laser_positions'])) for i in rx for j in ry]
+            S = [[1000*rec.sd(sim.amplitude, (i,j), 5*pad.side/float(dictInput['laser_positions'])) for i in rx] for j in tqdm(ry,leave=False,desc = 'SD calculation y' )]
+            meaningful_res = [1000*rec.sd(sim.amplitude, (i,j), 5*pad.side/float(dictInput['laser_positions'])) for i in rx for j in ry]
             median_res = np.median(meaningful_res)
             median_res_list.append(median_res)
             """
@@ -446,9 +447,9 @@ def draw_amp_pos(SimAnode, pad, y_offset, ax):
     ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.2, linestyle='-')
     initpoint = n*int(n/2)
     amp_indexed = SimAnode.amplitude[:,(initpoint+y_offset*n):(initpoint+(y_offset+1)*n)]
-    ax.plot(SimAnode.coord_x, (amp_indexed[11]+noise_level)/(np.pi*float(dictInput['radius'])**2),label='center-left pad')
-    ax.plot(SimAnode.coord_x, (amp_indexed[12]+noise_level)/(np.pi*float(dictInput['radius'])**2),label='center pad')
-    ax.plot(SimAnode.coord_x, (amp_indexed[13]+noise_level)/(np.pi*float(dictInput['radius'])**2),label='center-right pad')
+    ax.plot(SimAnode.coord_x, (amp_indexed[11]+noise_level),label='center-left pad')
+    ax.plot(SimAnode.coord_x, (amp_indexed[12]+noise_level),label='center pad')
+    ax.plot(SimAnode.coord_x, (amp_indexed[13]+noise_level),label='center-right pad')
 
     ax.legend(loc=1, framealpha=0.5, fontsize='medium')
     ax.set_ylim(bottom=0)
@@ -543,7 +544,7 @@ if __name__ == "__main__":
     if dictInput['compare']=='yes':
         #draw_multiple(float(dictInput['step']))
         plt.show()
-    elif dictInput['save_sims']=='yes':
+    elif dictInput['step_sim']=='yes':
         draw_step()
     elif dictInput['lookup_table']=='yes':
         draw_reconstructed()
