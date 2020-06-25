@@ -204,7 +204,7 @@ def draw_reconstructed():
     maxv = 500#min(np.amax(S), 1000)
     pc = ax2.pcolor(X,Y, S, vmax = maxv)
     cbar = plt.colorbar(pc, ax = ax2)
-    cbar.set_label('Position Resolution[μm]', rotation=90)
+    cbar.set_label('Resolution Function', rotation=90)
     ax2.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax2.transAxes,color = 'white')
     save_plot(fig2, id+"_sd_colorplot")
 
@@ -236,7 +236,7 @@ def draw_sd_colorplot(sim, pad, ax):
     maxv = 500#min(np.amax(S), 1000)
     pc = ax.pcolor(X,Y, S, vmax = maxv)
     cbar = plt.colorbar(pc, ax = ax)
-    cbar.set_label('Position Resolution[μm]', rotation=90)
+    cbar.set_label('Resolution Function', rotation=90)
     ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'white')
 def draw_sd_colorplot_debug(sim, pad, ax):
     draw_pattern(pad, ax)
@@ -262,7 +262,7 @@ def draw_sd_colorplot_debug(sim, pad, ax):
     maxv = 500
     pc = ax.pcolor(X,Y, S, vmax = maxv)
     cbar = plt.colorbar(pc, ax = ax)
-    cbar.set_label('Position Resolution[μm]', rotation=90)
+    cbar.set_label('Resolution Function', rotation=90)
     ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'white')
 def draw_sd_pos(sim, pad, y_offset, ax):
     n = int(dictInput['laser_positions'])
@@ -272,7 +272,7 @@ def draw_sd_pos(sim, pad, y_offset, ax):
     if dictInput['shape'] == 'square':
         ax.axvline(-0.5*pad.side,color='red')
         ax.axvline(0.5*pad.side,color='red')
-    ax.set_ylabel('Position Resolution[μm]')
+    ax.set_ylabel('Resolution Function')
     ax.tick_params(which='both', width=3)
     ax.tick_params(which='major', length=5, color='b')
     loc = plticker.MultipleLocator(base = float(dictInput['length'])) # this locator puts ticks at square intervals
@@ -288,7 +288,7 @@ def draw_sd_pos(sim, pad, y_offset, ax):
     else:
         S = [1000*rec.sd(sim.amplitude, (i,y_offset + int(n/2)), 5*pad.side/float(dictInput['laser_positions'])) for i in range(n)] 
         np.save(id+"_sd_xaxis.npy", S)
-    ax.plot(sim.coord_x[rx[0]:rx[len(rx)-1]], S[rx[0]:rx[len(rx)-1]],label='Position Resolution')
+    ax.plot(sim.coord_x[rx[0]:rx[len(rx)-1]], S[rx[0]:rx[len(rx)-1]],label='Resolution Function')
     ax.set_ylim(bottom=0, top = 500)
     draw_pattern_embed(pad, ax, 0, 0, 0.2, 0.2)
     ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
@@ -369,7 +369,7 @@ def save_sd(sims, pad, ax, filename):
         np.save(filename+"_l10.npy", l10_res_list)
         np.save(filename+"_median.npy", median_res_list)
     
-    ax.set_ylabel('Position Resolution[μm]')
+    ax.set_ylabel('Resolution Function')
     if float(dictInput['length_incr'])!= 0:
         ax.set_xlabel('L')
         
