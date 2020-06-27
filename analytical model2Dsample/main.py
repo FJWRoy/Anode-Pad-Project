@@ -148,7 +148,7 @@ def draw_reconstructed():
     id = plotID()
     n = int(dictInput['laser_positions'])
     if dictInput['read']:
-        recon_positions = np.load(id+"_reconstruction.npy")
+        recon_positions = float(dictInput['read_scale'])*np.load(id+"_reconstruction.npy")
     else:
         rec = reconstruction()
         recon_positions = [rec.reconstruction(sim.amplitude[:, i],sim.amplitude) for i in tqdm(range(n**2),leave=False, desc='reconstruction')]
@@ -190,7 +190,7 @@ def draw_reconstructed():
     S = list()
     id = plotID()
     if dictInput['read']:
-        S = np.load(id+"_sd_colorplot.npy")
+        S = float(dictInput['read_scale'])*np.load(id+"_sd_colorplot.npy")
     else:
         rec = reconstruction()
         S = [[1000*rec.sd(sim.amplitude, (i,j), 4*int(dictInput['layers'])*pad.side/float(dictInput['laser_positions'])) for i in rx] for j in tqdm(ry,leave=False,desc = 'SD calculation y' )]
@@ -222,7 +222,7 @@ def draw_sd_colorplot(sim, pad, ax):
     S = list()
     id = plotID()
     if dictInput['read']:
-        S = np.load(id+"_sd_colorplot.npy")
+        S = float(dictInput['read_scale'])*np.load(id+"_sd_colorplot.npy")
     else:
         rec = reconstruction()
         S = [[1000*rec.sd(sim.amplitude, (i,j), 5*pad.side/float(dictInput['laser_positions'])) for i in rx] for j in tqdm(ry,leave=False,desc = 'SD calculation y' )]
@@ -284,7 +284,7 @@ def draw_sd_pos(sim, pad, y_offset, ax):
     S = list()
     id = plotID()
     if dictInput['read']:
-        S = np.load(id+"_sd_xaxis.npy")
+        S = float(dictInput['read_scale'])*np.load(id+"_sd_xaxis.npy")
     else:
         S = [1000*rec.sd(sim.amplitude, (i,y_offset + int(n/2)), 5*pad.side/float(dictInput['laser_positions'])) for i in range(n)] 
         np.save(id+"_sd_xaxis.npy", S)
@@ -312,9 +312,9 @@ def save_sd(sims, pad, ax, filename):
     u10_res_list = list()
     l10_res_list = list()
     if dictInput['read']:
-        u10_res_list = np.load(filename+"_u10.npy")
-        l10_res_list = np.load(filename+"_l10.npy")
-        median_res_list = np.load(filename+"_median.npy")
+        u10_res_list = float(dictInput['read_scale'])*np.load(filename+"_u10.npy")
+        l10_res_list = float(dictInput['read_scale'])*np.load(filename+"_l10.npy")
+        median_res_list = float(dictInput['read_scale'])*np.load(filename+"_median.npy")
     else:
         for i in range(0,int(dictInput['num_sim'])):
             sim = sims[i]
