@@ -63,12 +63,12 @@ def make_step():
     if dictInput['read']:
         for i in range(int(dictInput['num_sim'])):
             sim = sim_anode()
-            sim.read_sim(id+"_sim_"+str(i)+".npy")
+            sim.read_sim(id+"_sim"+str(i)+".npy")
             sims.append(sim)
     else:
         sims = Parallel(n_jobs = int(dictInput['processes']), verbose = 10)(delayed(sim_job)(i) for i in range(int(dictInput['num_sim'])))
         for i in range(int(dictInput['num_sim'])):
-            np.save(id+"_sim_"+str(i)+".npy",sim.amplitude)
+            np.save(id+"_sim"+str(i)+".npy",sim.amplitude)
 
     return sample_pad, sims
 def sim_job(i):
