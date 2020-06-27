@@ -59,7 +59,17 @@ def create_pad(i):
 #Run simulations with differing pad size
 def make_step():
     sample_pad = create_pad(0)
-    sims = Parallel(n_jobs = int(dictInput['processes']), verbose = 10)(delayed(sim_job)(i) for i in range(0,int(dictInput['num_sim'])))
+    sims = list()
+    if dictInput['read']:
+        for i in range(int(dictInput['num_sim'])):
+            sim = sim_anode()
+            sim.read_sim(id+"_sim_"+str(i)+".npy")
+            sims.append(sim)
+    else:
+        sims = Parallel(n_jobs = int(dictInput['processes']), verbose = 10)(delayed(sim_job)(i) for i in range(int(dictInput['num_sim'])))
+        for i in range(int(dictInput['num_sim'])):
+            np.save(id+"_sim_"+str(i)+".npy",sim.amplitude)
+
     return sample_pad, sims
 def sim_job(i):
     pad = create_pad(i)
