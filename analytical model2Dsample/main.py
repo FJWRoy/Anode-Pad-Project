@@ -58,6 +58,7 @@ def create_pad(i):
     return pad
 #Run simulations with differing pad size
 def make_step():
+    id = plotID()
     sample_pad = create_pad(0)
     sims = list()
     if dictInput['read']:
@@ -68,7 +69,7 @@ def make_step():
     else:
         sims = Parallel(n_jobs = int(dictInput['processes']), verbose = 10)(delayed(sim_job)(i) for i in range(int(dictInput['num_sim'])))
         for i in range(int(dictInput['num_sim'])):
-            np.save(id+'_sim'+str(i)+'.npy',sim.amplitude)
+            np.save(id+'_sim'+str(i)+'.npy',sims[i].amplitude)
 
     return sample_pad, sims
 def sim_job(i):
@@ -211,7 +212,7 @@ def draw_reconstructed():
                     f.write(str(x+rx[0])+','+str(y+ry[0])+','+str(S[y][x])+'\n')
         with open(id+"_sd_colorplot.log", 'w') as f:
             f.write(rec.print_log())
-    maxv = 25#min(np.amax(S), 1000)
+    maxv = 25000#min(np.amax(S), 1000)
     pc = ax2.pcolor(X,Y, S, vmax = maxv)
     cbar = plt.colorbar(pc, ax = ax2)
     cbar.set_label('Resolution Function[μm]', rotation=90)
@@ -243,8 +244,9 @@ def draw_sd_colorplot(sim, pad, ax):
                     f.write(str(x+rx[0])+','+str(y+ry[0])+','+str(S[y][x])+'\n')
         with open(id+"_sd_colorplot.log", 'w') as f:
             f.write(rec.print_log())
-    maxv = 25#min(np.amax(S), 1000)
+    maxv = 25000#min(np.amax(S), 1000)
     pc = ax.pcolor(X,Y, S, vmax = maxv)
+    ax.ticklabel_format(axis = 'y', style = 'sci')
     cbar = plt.colorbar(pc, ax = ax)
     cbar.set_label('Resolution Function[μm]', rotation=90)
     ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'white')
@@ -269,7 +271,7 @@ def draw_sd_colorplot_debug(sim, pad, ax):
                 ax.plot(sim.coord_x[i], sim.coord_y[j], c='b', marker='x')
                 ax.text(sim.coord_x[i], sim.coord_y[j], str((i - 0.5*len(sim.coord_x))* scale)+','+str((j - 0.5*len(sim.coord_y))* scale))
                 outliers.append((i,j))
-    maxv = 25
+    maxv = 25000
     pc = ax.pcolor(X,Y, S, vmax = maxv)
     cbar = plt.colorbar(pc, ax = ax)
     cbar.set_label('Resolution Function[μm]', rotation=90)
@@ -299,7 +301,8 @@ def draw_sd_pos(sim, pad, y_offset, ax):
         S = [1000*rec.sd(sim.amplitude, (i,y_offset + int(n/2)), 5*pad.side/float(dictInput['laser_positions'])) for i in range(n)] 
         np.save(id+"_sd_xaxis.npy", S)
     ax.plot(sim.coord_x[rx[0]:rx[len(rx)-1]], S[rx[0]:rx[len(rx)-1]],label='Resolution Function[μm]')
-    ax.set_ylim(bottom=0, top = 25)
+    ax.set_ylim(bottom=0, top = 25000)
+    ax.ticklabel_format(axis = 'y', style = 'sci')
     draw_pattern_embed(pad, ax, 0, 0, 0.2, 0.2)
     ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
     with open(id+"_sd_xaxis.csv", 'w') as f:
@@ -325,6 +328,9 @@ def save_sd(sims, pad, ax, filename):
         u10_res_list = float(dictInput['read_scale'])*np.load(filename+"_u10.npy")
         l10_res_list = float(dictInput['read_scale'])*np.load(filename+"_l10.npy")
         median_res_list = float(dictInput['read_scale'])*np.load(filename+"_median.npy")
+        L_list = [(float(dictInput['length'])+i * float(dictInput['length_incr']))/float(dictInput['radius'])/2 for i in range(0,int(dictInput['num_sim']))]
+        W_list = [(float(dictInput['nose_end']) - float(dictInput['nose_start']) + i * (float(dictInput['nose_end_incr']) - float(dictInput['nose_start_incr']))) for i in range(0,int(dictInput['num_sim']))]
+        H_list = [(float(dictInput['pattern_height'])+ i*float(dictInput['pattern_height_incr'])) for i in range(0,int(dictInput['num_sim']))]
     else:
         for i in range(0,int(dictInput['num_sim'])):
             sim = sims[i]
@@ -384,7 +390,7 @@ def save_sd(sims, pad, ax, filename):
         
         ax.set_xlim(left=0, right = max(L_list)+0.1)
         ax.text(1, 0, dictInput['length_incr']+'mm '+dictInput['num_sim']+'increments', verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
-        ax.plot(L_list, l10_res_list, '-v',markersize = 4, label='10th percentile spot')
+        ax.plot(L_list, l10_res_list, '-v',markersize = 4, label='10th percentile')
         ax.plot(L_list, median_res_list,'-o',markersize = 4, label='median')
         ax.plot(L_list, u10_res_list,'-+',markersize = 4, label='90th percentile')
     elif float(dictInput['nose_start_incr'])!= 0:
@@ -405,8 +411,10 @@ def save_sd(sims, pad, ax, filename):
     #ax.fill_between(L_list, l10_res_list, u10_res_list, color = 'gray')
 
     ax.legend(loc=1, framealpha=0.5, fontsize='medium')
-    maxv = 50#min(np.amax(u10_res_list), 1000)
+    maxv = 50000#min(np.amax(u10_res_list), 1000)
+    ax.ticklabel_format(axis = 'y', style = 'sci', scilimits = (0,0))
     ax.set_ylim(top = maxv, bottom=0)
+    ax.ticklabel_format(style = 'sci')
     
     draw_pattern_embed(pad, ax, 0, 0.8, 0.2, 0.2)
     
