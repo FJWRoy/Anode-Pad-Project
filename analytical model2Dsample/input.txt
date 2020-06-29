@@ -10,7 +10,7 @@
 #compare: compare R/L ratios or not. Enter yes if so.
 
 shape:sin
-length:8.4
+length:16.8
 length_incr:2.1
 
 num_sim:15
@@ -26,7 +26,7 @@ radius:8.4
 processes:4
 laser_positions:100
 compare:no
-step_sim:yes
+step_sim:
 save:
 read:
 read_scale:

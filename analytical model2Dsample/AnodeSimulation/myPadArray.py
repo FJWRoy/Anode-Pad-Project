@@ -74,6 +74,7 @@ class myPadArray:
 
         """
         s = self.side
+        step = self.side/20
         x_range_left = np.arange(0, 0.5*s, step)
         y_range_left = np.sin((x_range_left * np.pi)/ (0.5*s)) * float(amp) *s
         x_range_right = np.arange(0.5*s, s, step)
