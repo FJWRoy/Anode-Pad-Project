@@ -75,7 +75,7 @@ def make_step():
 def sim_job(i):
     pad = create_pad(i)
     sim = sim_anode()
-    sim.get_coord_grid(int(dictInput['laser_positions']),float(dictInput['length']))
+    sim.get_coord_grid(int(dictInput['laser_positions']),float(dictInput['length']) + i*float(dictInput['length_incr']) )
     sim.update_end(pad)
     sim.run_sim(pad, float(dictInput['radius']))
     return sim
@@ -420,33 +420,6 @@ def save_sd(sims, pad, ax, filename):
     draw_pattern_embed(pad, ax, 0, 0.8, 0.2, 0.2)
     
 
-def construct_table(filename):
-    pads = myPadArray(float(dictInput['length']))
-    if dictInput['shape'] == 'sin':
-        pads.modify_one_sin_box(0.01, dictInput['pattern_height'])
-    elif dictInput['shape'] == 'nose':
-        pads.modify_one_n_box(dictInput['nose_start'], dictInput['nose_end'], dictInput['pattern_height'])
-    elif dictInput['shape'] == 'cross':
-        pads.modify_one_cross_box()
-    elif dictInput['shape'] == '45nose':
-        pads.modify_one_45degree_n_box(dictInput['nose_start'], dictInput['nose_end'], dictInput['pattern_height'], dictInput['trapezoid_height'])
-    elif dictInput['shape'] == '45wedge':
-        pads.modify_one_wedge_n_box(dictInput['nose_start'], dictInput['nose_end'], dictInput['pattern_height'])
-    elif dictInput['shape'] == 'square':
-        pass
-    else:
-        print("wrong input pad shape")
-        sys.exit(1)
-    pads.get_pad_5x5()
-    for i in range(0,int(dictInput['num_sim'])):
-        sim = sim_anode()
-        sim.get_coord_grid(int(dictInput['laser_positions']),float(dictInput['length']))
-        sim.update_end(pads)
-        table = sim.run_sim_table(pads, float(dictInput['radius']) / (1+i * float(dictInput['length_incr'])/float(dictInput['length'])))
-        with open(filename + '_'+dictInput['shape']+"_ratio_"+str((float(dictInput['length'])+i * float(dictInput['length_incr']))/float(dictInput['radius']))[0:5]+".pickle", 'wb') as f:
-            # Pickle the 'data' dictionary using the highest protocol available.
-            pickle.dump(table, f, pickle.HIGHEST_PROTOCOL)
- 
 def draw_amp_pos(SimAnode, pad, y_offset, ax):
     noise_level = 0.02
     #[ax.axvline(x, linestyle='-', color='red') for x in SimAnode.center_pads]
