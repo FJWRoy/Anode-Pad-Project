@@ -204,7 +204,7 @@ def draw_reconstructed():
         S = float(dictInput['read_scale'])*np.load(id+"_sd_colorplot.npy")
     else:
         rec = reconstruction()
-        S = [[rec.sd(sim.amplitude, (i,j), 4*int(dictInput['layers'])*pad.side/float(dictInput['laser_positions'])) for i in rx] for j in tqdm(ry,leave=False,desc = 'SD calculation y' )]
+        S = [[1000*rec.sd(sim.amplitude, (i,j), 4*int(dictInput['layers'])*pad.side/float(dictInput['laser_positions'])) for i in rx] for j in tqdm(ry,leave=False,desc = 'SD calculation y' )]
         np.save(id+"_sd_colorplot.npy",S)
         with open(id+"_sd_colorplot.csv", 'w') as f:
             for x in range(len(rx)):
@@ -212,10 +212,10 @@ def draw_reconstructed():
                     f.write(str(x+rx[0])+','+str(y+ry[0])+','+str(S[y][x])+'\n')
         with open(id+"_sd_colorplot.log", 'w') as f:
             f.write(rec.print_log())
-    maxv = 25#min(np.amax(S), 1000)
+    maxv = 1000#min(np.amax(S), 1000)
     pc = ax2.pcolor(X,Y, S, vmax = maxv)
     cbar = plt.colorbar(pc, ax = ax2)
-    cbar.set_label('Resolution Function[μm]', rotation=90)
+    cbar.set_label('Position Resolution[μm]', rotation=90)
     ax2.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax2.transAxes,color = 'white')
     save_plot(fig2, id+"_sd_colorplot")
 
@@ -236,7 +236,7 @@ def draw_sd_colorplot(sim, pad, ax):
         S = float(dictInput['read_scale'])*np.load(id+"_sd_colorplot.npy")
     else:
         rec = reconstruction()
-        S = [[rec.sd(sim.amplitude, (i,j), 5*pad.side/float(dictInput['laser_positions'])) for i in rx] for j in tqdm(ry,leave=False,desc = 'SD calculation y' )]
+        S = [[1000*rec.sd(sim.amplitude, (i,j), 5*pad.side/float(dictInput['laser_positions'])) for i in rx] for j in tqdm(ry,leave=False,desc = 'SD calculation y' )]
         np.save(id+"_sd_colorplot.npy",S)
         with open(id+"_sd_colorplot.csv", 'w') as f:
             for x in range(len(rx)):
@@ -244,11 +244,11 @@ def draw_sd_colorplot(sim, pad, ax):
                     f.write(str(x+rx[0])+','+str(y+ry[0])+','+str(S[y][x])+'\n')
         with open(id+"_sd_colorplot.log", 'w') as f:
             f.write(rec.print_log())
-    maxv = 25#min(np.amax(S), 1000)
+    maxv = 1000#min(np.amax(S), 1000)
     pc = ax.pcolor(X,Y, S, vmax = maxv)
     ax.ticklabel_format(axis = 'y', style = 'sci')
     cbar = plt.colorbar(pc, ax = ax)
-    cbar.set_label('Resolution Function[μm]', rotation=90)
+    cbar.set_label('Position Resolution[μm]', rotation=90)
     ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'white')
 def draw_sd_colorplot_debug(sim, pad, ax):
     draw_pattern(pad, ax)
@@ -271,10 +271,10 @@ def draw_sd_colorplot_debug(sim, pad, ax):
                 ax.plot(sim.coord_x[i], sim.coord_y[j], c='b', marker='x')
                 ax.text(sim.coord_x[i], sim.coord_y[j], str((i - 0.5*len(sim.coord_x))* scale)+','+str((j - 0.5*len(sim.coord_y))* scale))
                 outliers.append((i,j))
-    maxv = 25
+    maxv = 1000
     pc = ax.pcolor(X,Y, S, vmax = maxv)
     cbar = plt.colorbar(pc, ax = ax)
-    cbar.set_label('Resolution Function[μm]', rotation=90)
+    cbar.set_label('Position Resolution[μm]', rotation=90)
     ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'white')
 def draw_sd_pos(sim, pad, y_offset, ax):
     n = int(dictInput['laser_positions'])
@@ -284,7 +284,7 @@ def draw_sd_pos(sim, pad, y_offset, ax):
     if dictInput['shape'] == 'square':
         ax.axvline(-0.5*pad.side,color='red')
         ax.axvline(0.5*pad.side,color='red')
-    ax.set_ylabel('Resolution Function[μm]')
+    ax.set_ylabel('Position Resolution[μm]')
     ax.tick_params(which='both', width=3)
     ax.tick_params(which='major', length=5, color='b')
     loc = plticker.MultipleLocator(base = float(dictInput['length'])) # this locator puts ticks at square intervals
@@ -298,10 +298,10 @@ def draw_sd_pos(sim, pad, y_offset, ax):
     if dictInput['read']:
         S = float(dictInput['read_scale'])*np.load(id+"_sd_xaxis.npy")
     else:
-        S = [rec.sd(sim.amplitude, (i,y_offset + int(n/2)), 5*pad.side/float(dictInput['laser_positions'])) for i in range(n)] 
+        S = [1000*rec.sd(sim.amplitude, (i,y_offset + int(n/2)), 5*pad.side/float(dictInput['laser_positions'])) for i in range(n)] 
         np.save(id+"_sd_xaxis.npy", S)
-    ax.plot(sim.coord_x[rx[0]:rx[len(rx)-1]], S[rx[0]:rx[len(rx)-1]],label='Resolution Function[μm]')
-    ax.set_ylim(bottom=0, top = 25)
+    ax.plot(sim.coord_x[rx[0]:rx[len(rx)-1]], S[rx[0]:rx[len(rx)-1]],label='Position Resolution[μm]')
+    ax.set_ylim(bottom=0, top = 1000)
     #ax.ticklabel_format(axis = 'y', style = 'sci')
     draw_pattern_embed(pad, ax, 0, 0, 0.2, 0.2)
     ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
@@ -338,7 +338,7 @@ def save_sd(sims, pad, ax, filename):
             rx = [x for x in range(0, len(sim.coord_x)) if (-1.5*side<sim.coord_x[x] and sim.coord_x[x]<1.5*side)]#We are only plotting for the area of interest.
             ry = [y for y in range(0, len(sim.coord_y)) if (-1.5*side<sim.coord_y[y] and sim.coord_y[y]<1.5*side)]
             rec = reconstruction()
-            meaningful_res = [rec.sd(sim.amplitude, (i,j), 5*side/float(dictInput['laser_positions'])) for i in rx for j in ry]
+            meaningful_res = [1000* rec.sd(sim.amplitude, (i,j), 5*side/float(dictInput['laser_positions'])) for i in rx for j in ry]
             median_res = np.median(meaningful_res)
             median_res_list.append(median_res)
             """
@@ -385,7 +385,7 @@ def save_sd(sims, pad, ax, filename):
         np.save(filename+"_l10.npy", l10_res_list)
         np.save(filename+"_median.npy", median_res_list)
     
-    ax.set_ylabel('Resolution Function[μm]')
+    ax.set_ylabel('Position Resolution[μm]')
     if float(dictInput['length_incr'])!= 0:
         ax.set_xlabel('L')
         
@@ -412,7 +412,7 @@ def save_sd(sims, pad, ax, filename):
     #ax.fill_between(L_list, l10_res_list, u10_res_list, color = 'gray')
 
     ax.legend(loc=1, framealpha=0.5, fontsize='medium')
-    maxv = 50#min(np.amax(u10_res_list), 1000)
+    maxv = 1000#min(np.amax(u10_res_list), 1000)
     #ax.ticklabel_format(axis = 'y', style = 'sci', scilimits = (0,0))
     ax.set_ylim(top = maxv, bottom=0)
     ax.ticklabel_format(style = 'sci')
