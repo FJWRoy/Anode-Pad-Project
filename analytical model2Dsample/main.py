@@ -300,7 +300,9 @@ def draw_sd_pos(sim, pad, y_offset, ax):
     else:
         S = [1000*rec.sd(sim.amplitude, (i,y_offset + int(n/2)), 5*pad.side/float(dictInput['laser_positions'])) for i in range(n)] 
         np.save(id+"_sd_xaxis.npy", S)
-    ax.plot(sim.coord_x[rx[0]:rx[len(rx)-1]], S[rx[0]:rx[len(rx)-1]],label='Position Resolution[μm]')
+    ax.plot(sim.coord_x[rx[0]:rx[len(rx)-1]], S[rx[0]:rx[len(rx)-1]],label='7.5% Noise')
+    ax.plot(sim.coord_x[rx[0]:rx[len(rx)-1]], S[rx[0]:rx[len(rx)-1]]/7.5,label='1% Noise')
+    ax.set_ylabel('Position Resolution[μm]')
     ax.set_ylim(bottom=0, top = 1000)
     #ax.ticklabel_format(axis = 'y', style = 'sci')
     draw_pattern_embed(pad, ax, 0, 0, 0.2, 0.2)
@@ -391,23 +393,35 @@ def save_sd(sims, pad, ax, filename):
         
         ax.set_xlim(left=0, right = max(L_list)+0.1)
         ax.text(1, 0, dictInput['length_incr']+'mm '+dictInput['num_sim']+'increments', verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
-        ax.plot(L_list, l10_res_list, '-v',markersize = 4, label='10th percentile')
-        ax.plot(L_list, median_res_list,'-o',markersize = 4, label='median')
-        ax.plot(L_list, u10_res_list,'-+',markersize = 4, label='90th percentile')
+        ax.plot(L_list, l10_res_list, '-v',markersize = 4, label='10th percentile, 7.5% noise', color = 'firebrick')
+        ax.plot(L_list, median_res_list,'-o',markersize = 4, label='median, 7.5% noise', color = 'black')
+        ax.plot(L_list, u10_res_list,'-+',markersize = 4, label='90th percentile, 7.5% noise', color = 'firebrick')
+
+        ax.plot(L_list, l10_res_list/7.5, '-v',markersize = 4, label='10th percentile, 1% noise', color = 'firebrick')
+        ax.plot(L_list, median_res_list/7.5,'-o',markersize = 4, label='median, 1% noise', color = 'black')
+        ax.plot(L_list, u10_res_list/7.5,'-+',markersize = 4, label='90th percentile, 1% noise', color = 'firebrick')
     elif float(dictInput['nose_start_incr'])!= 0:
         ax.set_xlabel('W')
         ax.set_xlim(left=0, right = 1)
         ax.text(1, 0, str(float(dictInput['nose_start_incr'])-float(dictInput['nose_end_incr']))+'mm '+dictInput['num_sim']+'increments', verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
-        ax.plot(W_list, l10_res_list, '-v',markersize = 4, label='10th percentile')
-        ax.plot(W_list, median_res_list,'-o',markersize = 4, label='median')
-        ax.plot(W_list, u10_res_list,'-+',markersize = 4, label='90th percentile')
+        ax.plot(W_list, l10_res_list, '-v',markersize = 4, label='10th percentile, 7.5% noise', color = 'firebrick')
+        ax.plot(W_list, median_res_list,'-o',markersize = 4, label='median, 7.5% noise', color = 'black')
+        ax.plot(W_list, u10_res_list,'-+',markersize = 4, label='90th percentile, 7.5% noise', color = 'firebrick')
+
+        ax.plot(W_list, l10_res_list/7.5, '-v',markersize = 4, label='10th percentile, 1% noise', color = 'firebrick')
+        ax.plot(W_list, median_res_list/7.5,'-o',markersize = 4, label='median, 1% noise', color = 'black')
+        ax.plot(W_list, u10_res_list/7.5,'-+',markersize = 4, label='90th percentile, 1% noise', color = 'firebrick')
     elif float(dictInput['pattern_height_incr'])!= 0:
         ax.set_xlabel('H')
         ax.set_xlim(left=0, right = 1)
         ax.text(1, 0, dictInput['pattern_height_incr']+'mm '+dictInput['num_sim']+'increments', verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
-        ax.plot(H_list, l10_res_list, '-v',markersize = 4, label='10th percentile')
-        ax.plot(H_list, median_res_list,'-o',markersize = 4, label='median')
-        ax.plot(H_list, u10_res_list,'-+',markersize = 4, label='90th percentile')
+        ax.plot(H_list, l10_res_list, '-v',markersize = 4, label='10th percentile, 7.5% noise', color = 'firebrick')
+        ax.plot(H_list, median_res_list,'-o',markersize = 4, label='median, 7.5% noise', color = 'black')
+        ax.plot(H_list, u10_res_list,'-+',markersize = 4, label='90th percentile, 7.5% noise', color = 'firebrick')
+
+        ax.plot(H_list, l10_res_list/7.5, '-v',markersize = 4, label='10th percentile, 1% noise', color = 'firebrick')
+        ax.plot(H_list, median_res_list/7.5,'-o',markersize = 4, label='median, 1% noise', color = 'black')
+        ax.plot(H_list, u10_res_list/7.5,'-+',markersize = 4, label='90th percentile, 1% noise', color = 'firebrick')
     #ax.plot(L_list, max_res_list,'-o',markersize = 4, label='maximal spot')
     #ax.fill_between(L_list, l10_res_list, u10_res_list, color = 'gray')
 
@@ -421,7 +435,7 @@ def save_sd(sims, pad, ax, filename):
     
 
 def draw_amp_pos(SimAnode, pad, y_offset, ax):
-    noise_level = 0.02
+    noise_level = 0.075
     #[ax.axvline(x, linestyle='-', color='red') for x in SimAnode.center_pads]
     if dictInput['shape'] == 'square':
         ax.axvline(-0.5*pad.side,color='red')
@@ -430,7 +444,7 @@ def draw_amp_pos(SimAnode, pad, y_offset, ax):
     #ax.title.set_text('amplitude vs ring positions'+' y='+str(y_offset*5*pad.side/n))
     ax.set_xlabel('x[mm]')
     ax.set_xlim([-1.5*pad.side, 1.5*pad.side])
-    ax.set_ylabel('charges on the pad / total charges')
+    ax.set_ylabel('signal on the pad / total signal')
     ax.tick_params(which='both', width=3)
     ax.tick_params(which='major', length=5, color='b')
     loc = plticker.MultipleLocator(base = float(dictInput['length'])) # this locator puts ticks at square intervals
@@ -448,7 +462,7 @@ def draw_amp_pos(SimAnode, pad, y_offset, ax):
     ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
 
 def draw_amp_noise_ratio_pos(SimAnode, pad, y_offset, ax):
-    noise_level = 0.02
+    noise_level = 0.075
     np.seterr(all='print')
     ax.set_yscale('log')
     #[ax.axvline(x, linestyle='-', color='red') for x in SimAnode.center_pads]
@@ -458,7 +472,7 @@ def draw_amp_noise_ratio_pos(SimAnode, pad, y_offset, ax):
     #ax.title.set_text('amplitude+noise ratio vs ring positions'+' y='+str(y_offset*5*pad.side/float(dictInput['laser_positions'])))
     ax.set_xlabel('x[mm]')
     ax.set_xlim([-1.5*pad.side, 1.5*pad.side])
-    ax.set_ylabel('ratio of charge on pads including noise')
+    ax.set_ylabel('ratio of signal on pads including noise')
     ax.tick_params(which='both', width=3)
     ax.tick_params(which='major', length=5, color='b')
     loc = plticker.MultipleLocator(base = float(dictInput['length'])) # this locator puts ticks at square intervals
