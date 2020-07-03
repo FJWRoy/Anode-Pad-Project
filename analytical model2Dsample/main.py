@@ -389,6 +389,9 @@ def save_sd(sims, pad, ax, filename):
     
     ax.set_ylabel('Position Resolution[μm]')
     ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.2, linestyle='-')
+    l10_res_list = np.array(l10_res_list)
+    u10_res_list = np.array(u10_res_list)
+    median_res_list = np.array(median_res_list)
     if float(dictInput['length_incr'])!= 0:
         ax.set_xlabel('L')
         
