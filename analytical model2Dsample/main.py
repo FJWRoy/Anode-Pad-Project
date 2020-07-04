@@ -132,13 +132,13 @@ def draw_pattern_embed(pad, ax, x1, y1, x2, y2):
 
 def draw_radius(SimAnode, pad, ax):
     draw_pattern(pad, ax)
-    ax.add_artist(plt.Circle((SimAnode.middle_point[0], SimAnode.middle_point[1]), float(dictInput['radius']), alpha =0.8, color='crimson'))
-    ax.add_artist(plt.Circle((SimAnode.middle_point[0]+pad.side*0.5, SimAnode.middle_point[1]), float(dictInput['radius']), alpha =0.8, color='crimson'))
-    ax.add_artist(plt.Circle((SimAnode.middle_point[0]-pad.side*0.5, SimAnode.middle_point[1]), float(dictInput['radius']), alpha =0.8, color='crimson'))
+    ax.add_artist(plt.Circle((0, 0), float(dictInput['radius']), alpha =0.8, color='crimson'))
+    ax.add_artist(plt.Circle((pad.side*0.5, 0), float(dictInput['radius']), alpha =0.8, color='crimson'))
+    ax.add_artist(plt.Circle((-pad.side*0.5, 0), float(dictInput['radius']), alpha =0.8, color='crimson'))
     legend_lst = [Line2D([0], [0], marker='o', color='crimson', label='ring spot', markersize=10), Line2D([0], [0], marker='x', color='b', label='actual ring position', markersize=4)]
-    ax.plot(SimAnode.middle_point[0], SimAnode.middle_point[1], c='b', marker='x')
-    ax.plot(SimAnode.middle_point[0]+pad.side*0.5, SimAnode.middle_point[1], c='b', marker='x')
-    ax.plot(SimAnode.middle_point[0]-pad.side*0.5, SimAnode.middle_point[1], c='b', marker='x')
+    ax.plot(0,0, c='b', marker='x')
+    ax.plot(pad.side*0.5, 0, c='b', marker='x')
+    ax.plot(-pad.side*0.5, 0, c='b', marker='x')
     ax.legend(loc=1, framealpha=0.7, fontsize='x-small', handles=legend_lst)
     ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
 
