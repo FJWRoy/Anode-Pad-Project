@@ -21,6 +21,7 @@ def make():
     id = plotID()
     if dictInput['read']:
         sim.read_sim(id+"_sim.npy")
+        sim.get_coord_grid(int(dictInput['laser_positions']),float(dictInput['length']) )
     else:
         if dictInput['shape'] == 'multilayer':
             sim.get_coord_grid_multilayer(int(dictInput['laser_positions']), float(dictInput['length']), int(dictInput['layers']))
@@ -65,6 +66,7 @@ def make_step():
         for i in range(int(dictInput['num_sim'])):
             sim = sim_anode()
             sim.read_sim(id+'_sim'+str(i)+'.npy')
+            sim.get_coord_grid(int(dictInput['laser_positions']),float(dictInput['length']) + i*float(dictInput['length_incr']) )
             sims.append(sim)
     else:
         sims = Parallel(n_jobs = int(dictInput['processes']), verbose = 10)(delayed(sim_job)(i) for i in range(int(dictInput['num_sim'])))
