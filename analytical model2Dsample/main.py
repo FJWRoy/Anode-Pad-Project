@@ -429,13 +429,13 @@ def save_sd(sims, pad, ax, filename):
     #ax.plot(L_list, max_res_list,'-o',markersize = 4, label='maximal spot')
     #ax.fill_between(L_list, l10_res_list, u10_res_list, color = 'gray')
 
-    ax.legend(loc=1, framealpha=0.5, fontsize='small')
+    ax.legend(loc='upper left', framealpha=0.5, fontsize='x-small')
     maxv = 1000#min(np.amax(u10_res_list), 1000)
     #ax.ticklabel_format(axis = 'y', style = 'sci', scilimits = (0,0))
     ax.set_ylim(top = maxv, bottom=0)
     ax.ticklabel_format(style = 'sci')
     
-    draw_pattern_embed(pad, ax, 0, 0.8, 0.2, 0.2)
+    draw_pattern_embed(pad, ax, 0, 0.2, 0.2, 0.2)
     
 
 def draw_amp_pos(SimAnode, pad, y_offset, ax):
