@@ -26,12 +26,12 @@ def make():
         if dictInput['shape'] == 'multilayer':
             sim.get_coord_grid_multilayer(int(dictInput['laser_positions']), float(dictInput['length']), int(dictInput['layers']))
             sim.update_end(pad)
-            sim.run_sim_multilayer_multithread(pad, float(dictInput['radius']), int(dictInput['processes']), int(dictInput['layers']))
+            sim.run_sim_multilayer_multithread(pad, float(dictInput['radius']), int(dictInput['processes']), int(dictInput['layers']), int(dictInput['num_sample']))
             np.save(id+"_sim.npy",sim.amplitude)
         else:
             sim.get_coord_grid(int(dictInput['laser_positions']), float(dictInput['length']))
             sim.update_end(pad)
-            sim.run_sim_multithread(pad, float(dictInput['radius']), int(dictInput['processes']))
+            sim.run_sim_multithread(pad, float(dictInput['radius']), int(dictInput['processes']), int(dictInput['num_sample']))
             np.save(id+"_sim.npy",sim.amplitude)
     
     return pad, sim
@@ -79,7 +79,7 @@ def sim_job(i):
     sim = sim_anode()
     sim.get_coord_grid(int(dictInput['laser_positions']),float(dictInput['length']) + i*float(dictInput['length_incr']) )
     sim.update_end(pad)
-    sim.run_sim(pad, float(dictInput['radius']))
+    sim.run_sim(pad, float(dictInput['radius']), int(dictInput['num_sample']))
     return sim
 
 def draw_pattern(a, ax):

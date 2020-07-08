@@ -53,20 +53,20 @@ class sim_anode:
         self.center_pads = [left_start, center_start, right_start, right_end]#We save the coordinates of the pads of interest.
         """
 
-    def run_sim(self, myPadArray, radius):
-        self.amplitude = self.run_sim_table(myPadArray, radius)
+    def run_sim(self, myPadArray, radius, num_sample):
+        self.amplitude = self.run_sim_table(myPadArray, radius, num_sample)
     # saves lookup table of amplitudes.
-    def run_sim_table(self, myPadArray, radius):
+    def run_sim_table(self, myPadArray, radius, num_sample):
         self.lst_coord = list((x,y) for y in self.coord_y for x in self.coord_x)#Define a grid from coord_x and coord_y
         #lst_spot = [Point(x,y).buffer(radius) for (x,y) in self.lst_coord]
         #lst_amp = [[x.intersection(b).area for x in lst_spot] for b in tqdm(myPadArray.box_array, leave=False, desc = 'simulation')]
-        lst_amp = [self.sim_job_gaussian(30, radius *3 , radius/2, b) for b in tqdm(myPadArray.box_array, leave=False, desc = 'simulation')]
+        lst_amp = [self.sim_job_gaussian(num_sample, radius *3 , radius/2, b) for b in tqdm(myPadArray.box_array, leave=False, desc = 'simulation')]
         #More memory efficient to not use lst_spot. Speed implications?
         return np.array(lst_amp)
-    def run_sim_multithread(self, myPadArray, radius, num_thread):
-        self.amplitude = self.run_sim_table_multithread(myPadArray, radius, num_thread)
-    def run_sim_multilayer_multithread(self, myPadArray, radius, num_thread, array_size):
-        table = self.run_sim_table_multithread(myPadArray, radius, num_thread)
+    def run_sim_multithread(self, myPadArray, radius, num_thread, num_sample):
+        self.amplitude = self.run_sim_table_multithread(myPadArray, radius, num_thread, num_sample)
+    def run_sim_multilayer_multithread(self, myPadArray, radius, num_thread, array_size, num_sample):
+        table = self.run_sim_table_multithread(myPadArray, radius, num_thread, num_sample)
         n = 4*array_size
         for c in range(8):
             if(c%4==0):
@@ -95,9 +95,9 @@ class sim_anode:
                     self.amplitude.append(sum)
         self.amplitude = np.array(self.amplitude)
     # saves lookup table of amplitudes.
-    def run_sim_table_multithread(self, myPadArray, radius, num_thread):
+    def run_sim_table_multithread(self, myPadArray, radius, num_thread, num_sample):
         self.lst_coord = list((x,y) for y in self.coord_y for x in self.coord_x)#Define a grid from coord_x and coord_y
-        lst_amp = Parallel(n_jobs = num_thread, verbose = 10)(delayed(self.sim_job_gaussian)(15, radius *3 , radius/2, b) for b in myPadArray.box_array)
+        lst_amp = Parallel(n_jobs = num_thread, verbose = 10)(delayed(self.sim_job_gaussian)(num_sample, radius *3 , radius/2, b) for b in myPadArray.box_array)
         return np.array(lst_amp)
     def sim_job(self, radius, b):
         return np.array([Point(x,y).buffer(radius).intersection(b).area for (x,y) in self.lst_coord])
