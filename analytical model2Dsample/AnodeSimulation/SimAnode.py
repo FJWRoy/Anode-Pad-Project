@@ -97,7 +97,7 @@ class sim_anode:
     # saves lookup table of amplitudes.
     def run_sim_table_multithread(self, myPadArray, radius, num_thread):
         self.lst_coord = list((x,y) for y in self.coord_y for x in self.coord_x)#Define a grid from coord_x and coord_y
-        lst_amp = Parallel(n_jobs = num_thread, verbose = 10)(delayed(self.sim_job_gaussian)(6, radius *3 , radius/2, b) for b in myPadArray.box_array)
+        lst_amp = Parallel(n_jobs = num_thread, verbose = 10)(delayed(self.sim_job_gaussian)(15, radius *3 , radius/2, b) for b in myPadArray.box_array)
         return np.array(lst_amp)
     def sim_job(self, radius, b):
         return np.array([Point(x,y).buffer(radius).intersection(b).area for (x,y) in self.lst_coord])
