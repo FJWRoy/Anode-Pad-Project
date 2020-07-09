@@ -300,7 +300,7 @@ def draw_sd_pos(sim, pad, y_offset, ax):
     if dictInput['read']:
         S = float(dictInput['read_scale'])*np.load(id+"_sd_xaxis.npy")
     else:
-        S = [1000*rec.sd(sim.amplitude, (i,y_offset + int(n/2)), 5*pad.side/float(dictInput['laser_positions'])) for i in range(n)] 
+        S = np.array([1000*rec.sd(sim.amplitude, (i,y_offset + int(n/2)), 5*pad.side/float(dictInput['laser_positions'])) for i in range(n)])
         np.save(id+"_sd_xaxis.npy", S)
     ax.plot(sim.coord_x[rx[0]:rx[len(rx)-1]], S[rx[0]:rx[len(rx)-1]],label='7.5% Noise')
     ax.plot(sim.coord_x[rx[0]:rx[len(rx)-1]], S[rx[0]:rx[len(rx)-1]]/7.5,label='1% Noise')
