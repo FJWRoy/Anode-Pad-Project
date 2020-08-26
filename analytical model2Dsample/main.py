@@ -134,14 +134,9 @@ def draw_pattern_embed(pad, ax, x1, y1, x2, y2):
 
 def draw_radius(SimAnode, pad, ax):
     draw_pattern(pad, ax)
-    ax.add_artist(plt.Circle((0, 0), float(dictInput['radius']), alpha =0.8, color='crimson'))
-    ax.add_artist(plt.Circle((pad.side*0.5, 0), float(dictInput['radius']), alpha =0.8, color='crimson'))
-    ax.add_artist(plt.Circle((-pad.side*0.5, 0), float(dictInput['radius']), alpha =0.8, color='crimson'))
+    ax.add_artist(plt.Circle((0, 0), float(dictInput['radius']), alpha =0.8, color='crimson', fill = False))
     legend_lst = [Line2D([0], [0], marker='o', color='crimson', label='ring spot', markersize=10), Line2D([0], [0], marker='x', color='b', label='actual ring position', markersize=4)]
     ax.plot(0,0, c='b', marker='x')
-    ax.plot(pad.side*0.5, 0, c='b', marker='x')
-    ax.plot(-pad.side*0.5, 0, c='b', marker='x')
-    ax.legend(loc=1, framealpha=0.7, fontsize='x-small', handles=legend_lst)
     ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
 
 def draw_reconstructed():
@@ -282,7 +277,7 @@ def draw_sd_pos(sim, pad, y_offset, ax):
     n = int(dictInput['laser_positions'])
     #ax.title.set_text('SD of reconstruction vs ring positions'+' y='+str(y_offset*5*pad.side/n))
     ax.set_xlabel('x[mm]')
-    ax.set_xlim([-1.5*pad.side, 1.5*pad.side])
+    ax.set_xlim([-0.5*pad.side, 1.5*pad.side])
     if dictInput['shape'] == 'square':
         ax.axvline(-0.5*pad.side,color='red')
         ax.axvline(0.5*pad.side,color='red')
@@ -449,7 +444,7 @@ def draw_amp_pos(SimAnode, pad, y_offset, ax):
     n = int(dictInput['laser_positions'])
     #ax.title.set_text('amplitude vs ring positions'+' y='+str(y_offset*5*pad.side/n))
     ax.set_xlabel('x[mm]')
-    ax.set_xlim([-1.5*pad.side, 1.5*pad.side])
+    ax.set_xlim([-0.5*pad.side, 1.5*pad.side])
     ax.set_ylabel('signal on the pad / total signal')
     ax.tick_params(which='both', width=3)
     ax.tick_params(which='major', length=5, color='b')
@@ -477,7 +472,7 @@ def draw_amp_noise_ratio_pos(SimAnode, pad, y_offset, ax):
         ax.axvline(0.5*pad.side,color='red')
     #ax.title.set_text('amplitude+noise ratio vs ring positions'+' y='+str(y_offset*5*pad.side/float(dictInput['laser_positions'])))
     ax.set_xlabel('x[mm]')
-    ax.set_xlim([-1.5*pad.side, 1.5*pad.side])
+    ax.set_xlim([-0.5*pad.side, 1.5*pad.side])
     ax.set_ylabel('ratio of signal on pads including noise')
     ax.tick_params(which='both', width=3)
     ax.tick_params(which='major', length=5, color='b')

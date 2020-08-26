@@ -9,11 +9,11 @@
 #end: specify a ending point of a laser path
 #compare: compare R/L ratios or not. Enter yes if so.
 
-shape:sin
+shape:square
 length:16.8
-length_incr:2.1
+length_incr:0
 
-num_sim:15
+num_sim:1
 nose_start:0
 nose_start_incr:0
 nose_end:0
@@ -24,7 +24,7 @@ pattern_height_incr:0
 
 radius:8.4
 processes:4
-laser_positions:100
+laser_positions:10
 num_sample:15
 compare:no
 step_sim:
