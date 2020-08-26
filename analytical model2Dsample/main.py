@@ -134,7 +134,7 @@ def draw_pattern_embed(pad, ax, x1, y1, x2, y2):
 
 def draw_radius(SimAnode, pad, ax):
     draw_pattern(pad, ax)
-    ax.add_artist(plt.Circle((0, 0), float(dictInput['radius']), alpha =0.8, color='crimson', fill = False))
+    ax.add_artist(plt.Circle((0, 0), float(dictInput['radius']), alpha =0.8, color='black', fill = False))
     legend_lst = [Line2D([0], [0], marker='o', color='crimson', label='ring spot', markersize=10), Line2D([0], [0], marker='x', color='b', label='actual ring position', markersize=4)]
     ax.plot(0,0, c='b', marker='x')
     ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
@@ -453,9 +453,8 @@ def draw_amp_pos(SimAnode, pad, y_offset, ax):
     ax.grid(b=True, which='major', axis='both', color='#000000', alpha=0.2, linestyle='-')
     initpoint = n*int(n/2)
     amp_indexed = SimAnode.amplitude[:,(initpoint+y_offset*n):(initpoint+(y_offset+1)*n)]
-    ax.plot(SimAnode.coord_x, (amp_indexed[11]+noise_level),label='center-left pad')
-    ax.plot(SimAnode.coord_x, (amp_indexed[12]+noise_level),label='center pad')
-    ax.plot(SimAnode.coord_x, (amp_indexed[13]+noise_level),label='center-right pad')
+    ax.plot(SimAnode.coord_x, (amp_indexed[12]+noise_level),label='left pad', color = '#D55E00')
+    ax.plot(SimAnode.coord_x, (amp_indexed[13]+noise_level),label='right pad', color = '#009E73')
 
     ax.legend(loc=1, framealpha=0.5, fontsize='medium')
     ax.set_ylim(bottom=0)
@@ -482,10 +481,10 @@ def draw_amp_noise_ratio_pos(SimAnode, pad, y_offset, ax):
     n = int(dictInput['laser_positions'])
     initpoint = n*int(n/2)
     amp_indexed = SimAnode.amplitude[:,(initpoint+y_offset*n):(initpoint+(y_offset+1)*n)]
-    ax.plot(SimAnode.coord_x, (amp_indexed[11]+noise_level)/(amp_indexed[12]+noise_level),label='center-right pad / center pad')
-    ax.plot(SimAnode.coord_x, (amp_indexed[13]+noise_level)/(amp_indexed[12]+noise_level),label='center-left pad / center pad')
-    ax.plot(SimAnode.coord_x, (amp_indexed[12]+noise_level)/(amp_indexed[11]+noise_level),label='center pad / center-right pad')
-    ax.plot(SimAnode.coord_x, (amp_indexed[12]+noise_level)/(amp_indexed[13]+noise_level),label='center pad / center-left pad')
+    ax.plot(SimAnode.coord_x, (amp_indexed[11]+noise_level)/(amp_indexed[12]+noise_level),label='right pad / left pad', color = '#D55E00')
+    #ax.plot(SimAnode.coord_x, (amp_indexed[13]+noise_level)/(amp_indexed[12]+noise_level),label='center-left pad / center pad')
+    ax.plot(SimAnode.coord_x, (amp_indexed[12]+noise_level)/(amp_indexed[11]+noise_level),label='left pad / right pad', color = '#009E73')
+    #ax.plot(SimAnode.coord_x, (amp_indexed[12]+noise_level)/(amp_indexed[13]+noise_level),label='center pad / center-left pad')
     ax.legend(loc=1, framealpha=0.5, fontsize='x-small')
     draw_pattern_embed(pad, ax, 0, 0, 0.2, 0.2)
     ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
