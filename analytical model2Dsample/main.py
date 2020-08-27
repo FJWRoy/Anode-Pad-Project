@@ -174,7 +174,7 @@ def draw_reconstructed():
         Y = [((i // n)/n-0.5)*paddim*float(dictInput['length']) for i in range(n**2)]
     ax.scatter(p_x, p_y, s=10,c='crimson', label='reconstructed ring position')
     ax.scatter(X, Y, c='blue', marker="_",label='actual ring position')
-    ax.legend(loc=1, framealpha=0.7, fontsize='x-small')
+    ax.legend(loc=1, framealpha=1, fontsize='x-small')
     ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
     save_plot(fig1, id+"_reconstruction")
     np.save(id+"_reconstruction.npy",recon_positions)
@@ -426,7 +426,7 @@ def save_sd(sims, pad, ax, filename):
     #ax.plot(L_list, max_res_list,'-o',markersize = 4, label='maximal spot')
     #ax.fill_between(L_list, l10_res_list, u10_res_list, color = 'gray')
 
-    ax.legend(loc='upper left', framealpha=0.5, fontsize='x-small')
+    ax.legend(loc='upper left', framealpha=1, fontsize='x-small')
     maxv = 1000#min(np.amax(u10_res_list), 1000)
     #ax.ticklabel_format(axis = 'y', style = 'sci', scilimits = (0,0))
     ax.set_ylim(top = maxv, bottom=0)
@@ -456,7 +456,7 @@ def draw_amp_pos(SimAnode, pad, y_offset, ax):
     ax.plot(SimAnode.coord_x, (amp_indexed[12]+noise_level),label='left pad', color = '#D55E00')
     ax.plot(SimAnode.coord_x, (amp_indexed[13]+noise_level),label='right pad', color = '#009E73')
 
-    ax.legend(loc=1, framealpha=0.5, fontsize='medium')
+    ax.legend(loc=1, framealpha=1, fontsize='medium')
     ax.set_ylim(bottom=0)
     draw_pattern_embed(pad, ax, 0, 0, 0.2, 0.2)
     ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
@@ -485,7 +485,7 @@ def draw_amp_noise_ratio_pos(SimAnode, pad, y_offset, ax):
     ax.plot(SimAnode.coord_x, (amp_indexed[13]+noise_level)/(amp_indexed[12]+noise_level),label='right pad / left pad', color = '#D55E00')
     #ax.plot(SimAnode.coord_x, (amp_indexed[12]+noise_level)/(amp_indexed[11]+noise_level),label='left pad / right pad')
     ax.plot(SimAnode.coord_x, (amp_indexed[12]+noise_level)/(amp_indexed[13]+noise_level),label='left pad / right pad', color = '#009E73')
-    ax.legend(loc=1, framealpha=0.5, fontsize='x-small')
+    ax.legend(loc=1, framealpha=1, fontsize='x-small')
     draw_pattern_embed(pad, ax, 0, 0, 0.2, 0.2)
     ax.text(1, 0, plotDesc(), verticalalignment='bottom', horizontalalignment='right', transform=ax.transAxes,color = 'black')
 
